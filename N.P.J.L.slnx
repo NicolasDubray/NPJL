@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="NPJL.Api/NPJL.Api.csproj" />
+  <Project Path="NPJL.Application/NPJL.Application.csproj" />
+  <Project Path="NPJL.Domain/NPJL.Domain.csproj" />
+  <Project Path="NPJL.Infrastructure/NPJL.Infrastructure.csproj" />
+  <Project Path="NPJL.Web/NPJL.Web.csproj" />
+</Solution>
