@@ -20,3 +20,8 @@ main {
         flex-direction: column;
     }
 }
+.page-content {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+}

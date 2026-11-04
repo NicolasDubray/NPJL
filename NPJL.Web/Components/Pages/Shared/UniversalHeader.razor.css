@@ -30,7 +30,12 @@
         padding: 8px 12px;
     }
 
+
     .header-logo img {
-        max-height: 54px;
+        display: block;
+        width: clamp(200px, 16vw, 300px);
+        height: auto;
+        object-fit: contain;
     }
+
 }
