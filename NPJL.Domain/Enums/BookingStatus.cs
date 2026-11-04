@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
+
 namespace NPJL.Domain.Enums
 {
-    internal class BookingStatus
+    public enum BookingStatus
     {
+        Received,
+        InProgress,
+        Finished
     }
 }
