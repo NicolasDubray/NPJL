@@ -2,9 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 
+
 namespace NPJL.Domain.Enums
 {
-    internal class InvoiceStatus
+    public enum InvoiceStatus
     {
+        Draft,
+        PendingApproval,
+        Rejected,
+        Approved,
+        Sent,
+        Paid,
+        Expired
     }
 }
