@@ -1,5 +1,53 @@
-﻿<h3>UniversalMenu</h3>
+﻿
+<nav class="universal-menu">
+
+    <!-- Hamburgerknapp för mobil -->
+    <button class="menu-toggle"
+            @onclick="ToggleMenu"
+            aria-label="Öppna eller stäng meny"
+            aria-expanded="@menuOpen">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Menylänkar -->
+    <div class="menu-links @(menuOpen ? "open" : "")">
+
+        <a href="/" @onclick="CloseMenu">Home</a>
+        <a href="#Booking" @onclick="CloseMenu">Booking</a>
+        <a href="#About" @onclick="CloseMenu">About</a>
+
+        <!-- Kund – visas när kund är inloggad -->
+        @* <a href="#Offers">Offers</a> *@
+        @* <a href="#ActiveOrders">Active orders</a> *@
+        @* <a href="#PendingInvoices">Pending invoices</a> *@
+
+        <!-- Anställd – visas när anställd är inloggad -->
+        @* <a href="#AssignedOrders">Assigned orders</a> *@
+
+        <!-- Administratör – visas när administratör är inloggad -->
+        @* <a href="#Orders">Orders</a> *@
+        @* <a href="#AddCustomer">Add customers</a> *@
+
+        <!-- Konto -->
+        <a href="#Login" @onclick="CloseMenu">Log in</a>
+        <a href="#Register" @onclick="CloseMenu">Register</a>
+        @* <a href="#Logout">Log out</a> *@
+
+    </div>
+</nav>
 
 @code {
+    private bool menuOpen = false;
 
+    private void ToggleMenu()
+    {
+        menuOpen = !menuOpen;
+    }
+
+    private void CloseMenu()
+    {
+        menuOpen = false;
+    }
 }
