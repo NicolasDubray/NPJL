@@ -4,31 +4,27 @@
 <div class="container"> @* tillfälligt tills MainLayout är fixad. *@   
 
     <div class="row justify-content-center">
-        <div class="col-12 col-lg-7">
-           <h1 class="h1 mb-4 text-center">CustomerProfile</h1>
+        <div class="col-12 col-lg-9">
+            <h1 class="h1 mb-4 text-center">CustomerProfile</h1>
+
             <h3 class="h4">Customer information</h3>
-            <div class="card mb-4">
-                <div class="card-body py-2 p-2">
-                    <div class="d-flex">
-                        <dl class="row mb-0">
-                            <dt class="col-sm-4">Customer Number</dt>
-                            <dd class="col-sm-8 fw-bold">Id</dd>
-                            <dt class="col-sm-4">Name:</dt>
-                            <dd class="col-sm-8 fw-bold">Anna Svensson</dd>
-                            <dt class="col-sm-4">Email:</dt>
-                            <dd class="col-sm-8 fw-bold">Anna@exempel.se</dd>
-                            <dt class="col-sm-4">Phone:</dt>
-                            <dd class="col-sm-8 fw-bold">0711111111</dd>
-                            <dt class="col-sm-4">Address:</dt>
-                            <dd class="col-sm-8 fw-bold">SverigeBästaGata 17B</dd>
-                        </dl>
-                    </div>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr><th>Customer Number</th><th>Name</th><th>Email</th><th>Phone</th><th>Address</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Id</td><td>Anna Svensson</td><td>Anna@exempel.se</td><td>0711111111</td><td>SverigeBästaGata 17B</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+
             <h3 class="h4 ">Ongoing orders</h3>
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <table class="table">
+                    <table class="table table-striped table-hover table-bordered">
                         <thead>
                             <tr>
                                 <th>Order</th><th>Start</th><th>End</th><th>Status</th>
@@ -42,10 +38,11 @@
                     </table>
                 </div>
             </div>
+
             <h3 class="h4">Pending invoices</h3>
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                <table class="table">
+                <table class="table table-striped table-hover table-bordered">
                     <thead>
                         <tr><th>OCR</th><th>Amount</th><th>Send date</th><th>Expiry date</th><th>Status</th></tr>
                     </thead>
@@ -59,9 +56,9 @@
                 </div>
             </div>
             <h3 class="h4">Order history</h3>
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <table class="table">
+                    <table class="table table-striped table-hover table-bordered">
                         <thead>
                             <tr><th>Order</th><th>Start</th><th>End</th><th>Status</th></tr>  
                         </thead>
@@ -75,9 +72,9 @@
             </div>
 
             <h3 class="h4">Invoice history</h3>
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <table class="table">
+                    <table class="table table-striped table-hover table-bordered">
                         <thead>
                             <tr><th>OCR</th><th>Amount</th><th>Send date</th><th>Expiry date</th><th>Status</th></tr>
                         </thead>
@@ -89,17 +86,18 @@
                     </table>
                 </div>
             </div>
+
             <h3 class="h4">Bank details</h3>
-            <div class="card mb-4">
-                <div class="card-body py-2 p-2">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4">Payment method:</dt>
-                        <dd class="col-sm-8 fw-bold">Bank transfer</dd>
-                        <dt class="col-sm-4">Payment reference:</dt>
-                        <dd class="col-sm-8 fw-bold">1234-5678901</dd>
-                        <dt class="col-sm-4">Active:</dt>
-                        <dd class="col-sm-8 fw-bold">Yes</dd>
-                    </dl>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr><th>Payment method</th><th>Payment reference</th><th>Active</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Bank transfer</td><td>1234-5678901</td><td>Yes</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
