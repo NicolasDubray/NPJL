@@ -1,4 +1,9 @@
-﻿
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using NPJL.Web.Services
+
+@inject CustomAuthenticationStateProvider AuthenticationProvider
+@inject NavigationManager Navigation
+
 <nav class="universal-menu">
 
     <!-- Hamburgerknapp för mobil -->
@@ -10,7 +15,7 @@
         <span></span>
         <span></span>
     </button>
-    
+
     <!-- Menylänkar -->
     <div class="menu-links @(menuOpen ? "open" : "")">
 
@@ -18,36 +23,82 @@
         <a href="#Booking" @onclick="CloseMenu">Booking</a>
         <a href="#About" @onclick="CloseMenu">About</a>
 
-        <!-- Kund – visas när kund är inloggad -->
-        @* <a href="#Offers">Offers</a> *@
-        @* <a href="#ActiveOrders">Active orders</a> *@
-        @* <a href="#PendingInvoices">Pending invoices</a> *@
+        <!-- Kontrollerar om en användare är inloggad -->
+        <AuthorizeView>
 
-        <!-- Anställd – visas när anställd är inloggad -->
-        @* <a href="#AssignedOrders">Assigned orders</a> *@
+            <Authorized Context="auth">
 
-        <!-- Administratör – visas när administratör är inloggad -->
-        @* <a href="#Orders">Orders</a> *@
-        @* <a href="#AddCustomer">Add customers</a> *@
+                <!-- Kund – visas när kund är inloggad -->
+                @if (auth.User.IsInRole("Customer"))
+                {
+                    @* <a href="#Offers" @onclick="CloseMenu">Offers</a> *@
+                    @* <a href="#ActiveOrders" @onclick="CloseMenu">Active orders</a> *@
+                    @* <a href="#PendingInvoices" @onclick="CloseMenu">Pending invoices</a> *@
+                }
 
-        <!-- Konto -->
-        <a href="#Login" @onclick="CloseMenu">Log in</a>
-        <a href="#Register" @onclick="CloseMenu">Register</a>
-        @* <a href="#Logout">Log out</a> *@
+                <!-- Anställd – visas när anställd är inloggad -->
+                @if (auth.User.IsInRole("Employee"))
+                {
+                    @* <a href="#AssignedOrders" @onclick="CloseMenu">Assigned orders</a> *@
+                }
+
+                <!-- Administratör – visas när administratör är inloggad -->
+                @if (auth.User.IsInRole("Administrator"))
+                {
+                    @* <a href="#Orders" @onclick="CloseMenu">Orders</a> *@
+                    @* <a href="#AddCustomer" @onclick="CloseMenu">Add customers</a> *@
+                }
+
+                <!-- Konto -->
+                <span class="logged-in-user">
+                    @auth.User.Identity?.Name
+                </span>
+
+                <button type="button"
+                        class="logout-button"
+                        @onclick="Logout">
+                    Log out
+                </button>
+
+            </Authorized>
+
+            <NotAuthorized>
+
+                <!-- Konto -->
+                <a href="/Login" @onclick="CloseMenu">Log in</a>
+                <a href="/Register" @onclick="CloseMenu">Register</a>
+
+            </NotAuthorized>
+
+        </AuthorizeView>
 
     </div>
 </nav>
 
 @code {
+    // Håller reda på om mobilmenyn är öppen eller stängd.
     private bool menuOpen = false;
 
+    // Öppnar eller stänger mobilmenyn.
     private void ToggleMenu()
     {
         menuOpen = !menuOpen;
     }
 
+    // Stänger mobilmenyn när en länk väljs.
     private void CloseMenu()
     {
         menuOpen = false;
+    }
+
+    // Loggar ut användaren och återställer autentiseringstillståndet.
+    private void Logout()
+    {
+        AuthenticationProvider.Logout();
+
+        CloseMenu();
+
+        // Skickar användaren tillbaka till startsidan efter utloggning.
+        Navigation.NavigateTo("/");
     }
 }

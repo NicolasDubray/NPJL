@@ -1,5 +1,7 @@
 using NPJL.Web.Components;
 using NPJL.Web.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,15 @@ builder.Services.AddHttpClient("NPJL.Api", client =>
             "API BaseUrl is missing from configuration."));
 });
 builder.Services.AddScoped<AuthService>();
+
+// Registrerar autentiseringshantering
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<CustomAuthenticationStateProvider>());
+
+builder.Services.AddCascadingAuthenticationState();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

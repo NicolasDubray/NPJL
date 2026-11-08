@@ -1,0 +1,98 @@
+﻿@page "/login"
+@using NPJL.Application.DTOs.Authentication
+@using NPJL.Web.Services
+@using System.Net.Http.Json
+@inject AuthService AuthService
+@inject CustomAuthenticationStateProvider AuthenticationProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Log in - The Office</PageTitle>
+
+<div class="login-container">
+
+    <h1>Log in</h1>
+
+    <p>Log in to manage your bookings and account.</p>
+
+    <EditForm Model="@login"
+              OnValidSubmit="LoginUser"
+              FormName="UserLogin">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Email</label>
+            <InputText @bind-Value="login.Email"
+                       class="form-control" />
+            <ValidationMessage For="@(() => login.Email)" />
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <InputText type="password"
+                       @bind-Value="login.Password"
+                       class="form-control" />
+            <ValidationMessage For="@(() => login.Password)" />
+        </div>
+
+        <button type="submit"
+                class="btn btn-primary"
+                disabled="@isLoading">
+            @(isLoading ? "Logging in..." : "Log in")
+        </button>
+
+    </EditForm>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <p>@message</p>
+    }
+
+</div>
+
+@code {
+    private LoginDto login = new();
+
+    private string message = string.Empty;
+    private bool isLoading;
+
+    private async Task LoginUser()
+    {
+        isLoading = true;
+        message = string.Empty;
+
+        try
+        {
+            var response = await AuthService.LoginAsync(login);
+
+            var result = await response.Content
+                .ReadFromJsonAsync<LoginResultDto>();
+
+            if (response.IsSuccessStatusCode &&
+                result?.Succeeded == true &&
+                !string.IsNullOrWhiteSpace(result.Token))
+            {
+                AuthenticationProvider.Login(
+                    result.Token,
+                    result.Email ?? login.Email,
+                    result.Roles);
+
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                message = result?.Message ?? "Login failed.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            message = "Could not connect to the server.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+

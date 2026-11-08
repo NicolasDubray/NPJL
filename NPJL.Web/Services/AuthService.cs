@@ -21,5 +21,13 @@ namespace NPJL.Web.Services
                 "api/Auth/register",
                 request);
         }
+        public async Task<HttpResponseMessage> LoginAsync(LoginDto request)
+        {
+            var client = _httpClientFactory.CreateClient("NPJL.Api");
+
+            return await client.PostAsJsonAsync(
+                "api/Auth/login",
+                request);
+        }
     }
 }

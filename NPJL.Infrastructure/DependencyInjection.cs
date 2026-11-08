@@ -27,7 +27,7 @@ namespace NPJL.Infrastructure
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-
+                
                 // Lösenordskrav
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
@@ -43,6 +43,7 @@ namespace NPJL.Infrastructure
             services.AddScoped<CustomerService>();
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
+            services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
 
             return services;
         }
