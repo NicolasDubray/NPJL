@@ -61,7 +61,7 @@
     {
         isLoading = true;
         message = string.Empty;
-
+        
         try
         {
             var response = await AuthService.LoginAsync(login);
@@ -73,10 +73,11 @@
                 result?.Succeeded == true &&
                 !string.IsNullOrWhiteSpace(result.Token))
             {
-                AuthenticationProvider.Login(
-                    result.Token,
-                    result.Email ?? login.Email,
-                    result.Roles);
+                await AuthenticationProvider.LoginAsync(
+                  result.Token,
+                  result.Email ?? login.Email,
+                  result.Roles); 
+
 
                 Navigation.NavigateTo("/");
             }

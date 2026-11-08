@@ -15,7 +15,7 @@
         <span></span>
         <span></span>
     </button>
-
+    
     <!-- Menylänkar -->
     <div class="menu-links @(menuOpen ? "open" : "")">
 
@@ -31,22 +31,23 @@
                 <!-- Kund – visas när kund är inloggad -->
                 @if (auth.User.IsInRole("Customer"))
                 {
-                    @* <a href="#Offers" @onclick="CloseMenu">Offers</a> *@
-                    @* <a href="#ActiveOrders" @onclick="CloseMenu">Active orders</a> *@
-                    @* <a href="#PendingInvoices" @onclick="CloseMenu">Pending invoices</a> *@
+                    <a href="#" @onclick:preventDefault="true">Offers</a>
+                    <a href="#" @onclick:preventDefault="true">Active orders</a>
+                    <a href="#" @onclick:preventDefault="true">Pending invoices</a>
                 }
 
-                <!-- Anställd – visas när anställd är inloggad -->
-                @if (auth.User.IsInRole("Employee"))
+                <!-- Anställd – visas när anställd eller administratör är inloggad -->
+                @if (auth.User.IsInRole("Employee") ||
+                    auth.User.IsInRole("Administrator"))
                 {
-                    @* <a href="#AssignedOrders" @onclick="CloseMenu">Assigned orders</a> *@
+                    <a href="#" @onclick:preventDefault="true">Assigned orders</a>
                 }
 
                 <!-- Administratör – visas när administratör är inloggad -->
                 @if (auth.User.IsInRole("Administrator"))
                 {
-                    @* <a href="#Orders" @onclick="CloseMenu">Orders</a> *@
-                    @* <a href="#AddCustomer" @onclick="CloseMenu">Add customers</a> *@
+                    <a href="#" @onclick:preventDefault="true">Orders</a>
+                    <a href="#" @onclick:preventDefault="true">Add customers</a>
                 }
 
                 <!-- Konto -->
@@ -92,9 +93,9 @@
     }
 
     // Loggar ut användaren och återställer autentiseringstillståndet.
-    private void Logout()
+    private async Task Logout()
     {
-        AuthenticationProvider.Logout();
+        await AuthenticationProvider.LogoutAsync();
 
         CloseMenu();
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NPJL.Application.DTOs.Authentication;
 using NPJL.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace NPJL.Api.Controllers
 {
@@ -20,6 +21,7 @@ namespace NPJL.Api.Controllers
         }
 
         // Kundregistrering
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register(
             [FromBody] CustomerRegistrationDto request)
@@ -35,6 +37,7 @@ namespace NPJL.Api.Controllers
         }
 
         // Inloggning
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login(
             [FromBody] LoginDto request)
