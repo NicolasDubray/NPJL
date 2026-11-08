@@ -1,8 +1,9 @@
-﻿using System;
+﻿using NPJL.Application.DTOs.Authentication;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using NPJL.Application.DTOs.Authentication;
-using NPJL.Application.Interfaces;
 
 namespace NPJL.Application.Services
 {
@@ -21,6 +22,11 @@ namespace NPJL.Application.Services
             var customer = await _customerRepository.GetByEmailAsync(email);
 
             return customer != null;
+        }
+        // Hämtar en kund med tillhörande kontakt- och betalningsuppgifter.
+        public async Task<Customer?> GetByIdAsync(int id)
+        {
+            return await _customerRepository.GetByIdAsync(id);
         }
     }
 }

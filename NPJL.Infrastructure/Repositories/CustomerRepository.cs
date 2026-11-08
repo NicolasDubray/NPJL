@@ -20,6 +20,8 @@ namespace NPJL.Infrastructure.Repositories
         public async Task<Customer?> GetByIdAsync(int id)
         {
             return await _context.Customers
+                .Include(c => c.ContactInfos)
+                .Include(c => c.PaymentDetails)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 

@@ -1,15 +1,20 @@
 ﻿using System.Net.Http.Json;
 using NPJL.Application.DTOs.Authentication;
+using System.Net.Http.Headers;
 
 namespace NPJL.Web.Services
 {
+    
     public class AuthService
     {
         private readonly IHttpClientFactory _httpClientFactory;
-
-        public AuthService(IHttpClientFactory httpClientFactory)
+        private readonly CustomAuthenticationStateProvider _authenticationProvider;
+        public AuthService(
+    IHttpClientFactory httpClientFactory,
+    CustomAuthenticationStateProvider authenticationProvider)
         {
             _httpClientFactory = httpClientFactory;
+            _authenticationProvider = authenticationProvider;
         }
 
         public async Task<HttpResponseMessage> RegisterCustomerAsync(
@@ -29,5 +34,21 @@ namespace NPJL.Web.Services
                 "api/Auth/login",
                 request);
         }
+        // Skapar en HttpClient som skickar med användarens JWT-token.
+        public HttpClient CreateAuthenticatedClient()
+        {
+            var client = _httpClientFactory.CreateClient("NPJL.Api");
+
+            if (!string.IsNullOrWhiteSpace(_authenticationProvider.Token))
+            {
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue(
+                        "Bearer",
+                        _authenticationProvider.Token);
+            }
+
+            return client;
+        }
+        
     }
 }
