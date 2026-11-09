@@ -4,7 +4,7 @@ using System.Text;
 
 namespace NPJL.Application.DTOs.Employees
 {
-    internal class CreateEmployeeDto
+    public sealed record CreateEmployeeDto
     {
     }
 }

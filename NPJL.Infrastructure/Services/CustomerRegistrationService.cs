@@ -9,6 +9,7 @@ using NPJL.Domain.Entities;
 using NPJL.Infrastructure.Identity;
 using NPJL.Infrastructure.Persistence;
 
+
 namespace NPJL.Infrastructure.Services
 {
     public class CustomerRegistrationService : ICustomerRegistrationService
