@@ -14,6 +14,7 @@ namespace NPJL.Infrastructure
 {
     public static class DependencyInjection
     {
+
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services,
             IConfiguration configuration)
@@ -40,7 +41,7 @@ namespace NPJL.Infrastructure
             // Registrerar repositories
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             // Registrerar services
-            services.AddScoped<CustomerService>();
+            services.AddScoped<NPJL.Application.Services.CustomerService>();
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
             services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();

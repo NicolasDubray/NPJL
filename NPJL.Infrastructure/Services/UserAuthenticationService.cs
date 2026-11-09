@@ -9,7 +9,7 @@ using NPJL.Application.Interfaces;
 using NPJL.Infrastructure.Identity;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using NPJL.Domain.Entities;
 
 namespace NPJL.Infrastructure.Services
 {
