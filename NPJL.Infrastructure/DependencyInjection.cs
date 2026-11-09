@@ -5,6 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NPJL.Infrastructure.Identity;
 using NPJL.Infrastructure.Persistence;
+using NPJL.Application.Interfaces;
+using NPJL.Infrastructure.Repositories;
+using NPJL.Application.Services;
+using NPJL.Infrastructure.Services;
 
 namespace NPJL.Infrastructure
 {
@@ -18,12 +22,12 @@ namespace NPJL.Infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection")));
-
+            
             // Registrerar ASP.NET Core Identity
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-
+                
                 // Lösenordskrav
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
@@ -33,7 +37,13 @@ namespace NPJL.Infrastructure
             })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
-           
+            // Registrerar repositories
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
+            // Registrerar services
+            services.AddScoped<CustomerService>();
+            // Registrerar kundregistreringstjänsten
+            services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
+            services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
 
             return services;
         }
