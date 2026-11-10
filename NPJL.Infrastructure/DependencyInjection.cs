@@ -14,7 +14,6 @@ namespace NPJL.Infrastructure
 {
     public static class DependencyInjection
     {
-
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services,
             IConfiguration configuration)
@@ -23,12 +22,12 @@ namespace NPJL.Infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection")));
-            
+
             // Registrerar ASP.NET Core Identity
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-                
+
                 // Lösenordskrav
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
@@ -38,10 +37,15 @@ namespace NPJL.Infrastructure
             })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
+
             // Registrerar repositories
             services.AddScoped<ICustomerRepository, CustomerRepository>();
+            services.AddScoped<ISalaryRepository, SalaryRepository>();
+
             // Registrerar services
             services.AddScoped<NPJL.Application.Services.CustomerService>();
+            services.AddScoped<SalaryService>();
+
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
             services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();

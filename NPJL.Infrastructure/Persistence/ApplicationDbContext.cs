@@ -34,6 +34,7 @@ namespace NPJL.Infrastructure.Persistence
         public DbSet<ContactInfo> ContactInfos => Set<ContactInfo>();
         public DbSet<Service> Services => Set<Service>();
         public DbSet<Employment> Employments => Set<Employment>();
+        public DbSet<Salary> Salaries => Set<Salary>();
         public DbSet<PaymentDetails> PaymentDetails => Set<PaymentDetails>();
         public DbSet<BankInfo> BankInfos => Set<BankInfo>();
         public DbSet<Booking> Bookings => Set<Booking>();
