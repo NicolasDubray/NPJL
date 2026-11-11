@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace NPJL.Application.DTOs.Customers
+﻿namespace NPJL.Application.DTOs.Customers
 {
     public sealed record CustomerDto
     {
-        int Id { get; init; }
-        string Name { get; init; } = String.Empty;
+        public int Id { get; init; }
+        public string Name { get; init; } = String.Empty;
+        public ContactInfoDto? ContactInfo { get; init; }
+
     }
 }

@@ -1,0 +1,113 @@
+﻿@page "/customerprofile"
+@rendermode InteractiveServer
+
+<div class="container"> @* tillfälligt tills MainLayout är fixad. *@   
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+            <h1 class="h1 mb-4 text-center">CustomerProfile</h1>
+
+            <h3 class="h4">Customer information</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr><th>Customer Number</th><th>Name</th><th>Email</th><th>Phone</th><th>Address</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Id</td><td>Anna Svensson</td><td>Anna@exempel.se</td><td>0711111111</td><td>SverigeBästaGata 17B</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3 class="h4 ">Ongoing orders</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Order</th><th>Start</th><th>End</th><th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2</td><td>2026-07-10</td><td>2026-09-10</td><td>InProgress</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3 class="h4">Pending invoices</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                <table class="table table-striped table-hover table-bordered">
+                    <thead>
+                        <tr><th>OCR</th><th>Amount</th><th>Send date</th><th>Expiry date</th><th>Status</th></tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td>12345678</td><td>24970</td><td>2026-10-19</td><td>2026-11-25</td><td>Sent</td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+            <h3 class="h4">Order history</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr><th>Order</th><th>Start</th><th>End</th><th>Status</th></tr>  
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>1</td><td>2026-08-10</td><td>2026-10-10</td><td>Finished</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3 class="h4">Invoice history</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr><th>OCR</th><th>Amount</th><th>Send date</th><th>Expiry date</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>87654321</td><td>18500</td><td>2026-08-15</td><td>2026-09-15</td><td>Paid</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3 class="h4">Bank details</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr><th>Payment method</th><th>Payment reference</th><th>Active</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Bank transfer</td><td>1234-5678901</td><td>Yes</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    
+
+}

@@ -1,9 +1,6 @@
-﻿using NPJL.Application.DTOs.Authentication;
+﻿using NPJL.Application.DTOs.Customers;
 using NPJL.Application.Interfaces;
 using NPJL.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace NPJL.Application.Services
 {
@@ -27,6 +24,28 @@ namespace NPJL.Application.Services
         public async Task<Customer?> GetByIdAsync(int id)
         {
             return await _customerRepository.GetByIdAsync(id);
+        }
+
+        public async Task<CustomerDto> GetProfileByEmailAsync(string email)
+        {
+            var customer = await _customerRepository.GetByEmailAsync(email)
+                ?? throw new Exception("Can not find customer");
+            var customerWithDetails = await _customerRepository.GetByIdAsync(customer.Id)
+                ?? throw new Exception("Can not find Customer");
+            var contact = customerWithDetails.ContactInfos.FirstOrDefault();
+            return new CustomerDto
+            {
+                Id = customerWithDetails.Id,
+                Name = customerWithDetails.FirstName + " " + customerWithDetails.LastName,
+                ContactInfo = contact == null ? null : new ContactInfoDto()
+                {
+                    Address = contact.Address,
+                    Email = contact.Email,
+                    Telephone = contact.Telephone
+                },
+
+            };
+
         }
     }
 }

@@ -1,37 +1,29 @@
-﻿using NPJL.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
 using NPJL.Infrastructure.Persistence;
 
 namespace NPJL.Infrastructure.Repositories
 {
-    public class TimeReportRepository
+    public class TimeReportRepository(ApplicationDbContext context)
+        : Repository<TimeReport>(context), ITimeReportRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public TimeReportRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        // Hämtar samtliga tidrapporter från databasen.
-        public async Task<IReadOnlyList<TimeReport>> GetAllAsync()
-        {
-            return await _context.TimeReports.ToListAsync();
-        }
-        public async Task<TimeReport?> GetByIdAsync(int id)
-        {
-            return await _context.TimeReports.FindAsync(id);
-        }
         public async Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAsync(int employeeId)
-        {
-            return await _context.TimeReports
+            => await Context.TimeReports
                 .Where(tr => tr.EmployeeId == employeeId)
                 .ToListAsync();
-        }
-     
 
+        public Task<IReadOnlyList<TimeReport>> GetByCustomerIdAsync(int customerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAndDateRangeAsync(
+            int employeeId,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
