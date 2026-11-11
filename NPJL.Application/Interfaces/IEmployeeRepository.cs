@@ -13,5 +13,8 @@ namespace NPJL.Application.Interfaces
     {
         // Hämtar en anställd via personnummer.
         Task<Employee?> GetBySSNAsync(string ssn);
+
+        // Hämtar samtliga aktiva anställda.
+        Task<IReadOnlyList<Employee>> GetAllActiveAsync();
     }
 }
