@@ -1,31 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.EntityFrameworkCore;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
+using NPJL.Infrastructure.Persistence;
 
 namespace NPJL.Infrastructure.Repositories
 {
-    public class BookingRepository
+    public class BookingRepository(ApplicationDbContext context)
+        : Repository<Booking>(context), IBookingRepository
     {
-        public Task<IReadOnlyList<BookingRepository>> GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-        public Task<BookingRepository?> GetByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-        public Task<BookingRepository> CreateAsync(BookingRepository booking)
-        {
-            throw new NotImplementedException();
-        }
-        public Task UpdateAsync(BookingRepository booking)
-        {
-            throw new NotImplementedException();
-        }
-        public Task removeAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
+        public async Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(int customerId)
+            => await Context.Bookings
+                .Where(b => b.CustomerId == customerId).ToListAsync();
     }
 }

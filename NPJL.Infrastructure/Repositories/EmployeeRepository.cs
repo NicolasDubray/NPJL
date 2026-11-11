@@ -1,8 +1,4 @@
 ﻿using NPJL.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using NPJL.Domain.Entities;
 
 namespace NPJL.Infrastructure.Repositories
 {

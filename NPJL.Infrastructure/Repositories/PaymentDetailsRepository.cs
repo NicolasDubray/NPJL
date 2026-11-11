@@ -1,29 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.EntityFrameworkCore;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
+using NPJL.Infrastructure.Persistence;
 
 namespace NPJL.Infrastructure.Repositories
 {
-    public class PaymentDetailsRepository
+    public class PaymentDetailsRepository(ApplicationDbContext context)
+        : Repository<PaymentDetails>(context), IPaymentDetailsRepository
     {
-        public async Task AddAsync()
-        {
-
-        }
-        public async Task UpdateAsync()
-        {
-        }
-        public async Task RemoveAsync()
-        {
-        }
-        public async Task GetByIdAsync()
-        {
-        }
-        public async Task GetAllAsync()
-        {
-        }
-        public async Task GetByCustomerIdAsync()
-        {
-        }
+        public async Task<IReadOnlyList<PaymentDetails>> GetByCustomerIdAsync(int customerId)
+            => await Context.PaymentDetails
+                .Where(p => p.CustomerId == customerId)
+                .ToListAsync();
     }
 }

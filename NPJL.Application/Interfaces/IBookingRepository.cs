@@ -1,8 +1,4 @@
-﻿using NPJL.Application.DTOs.Bookings;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using NPJL.Domain.Entities;
+﻿using NPJL.Domain.Entities;
 
 namespace NPJL.Application.Interfaces
 {
@@ -10,7 +6,7 @@ namespace NPJL.Application.Interfaces
     // Ärver gemensamma CRUD-operationer från IRepository.
     public interface IBookingRepository : IRepository<Booking>
     {
-        // Här kan bokningsspecifika metoder läggas till.
+        Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(int customerId);
     }
 }
 
