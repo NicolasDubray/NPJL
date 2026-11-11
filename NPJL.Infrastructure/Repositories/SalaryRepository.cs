@@ -42,7 +42,19 @@ namespace NPJL.Infrastructure.Repositories
                 .OrderBy(s => s.ValidFrom)
                 .ToListAsync();
         }
-
+        // Kontrollerar om en anställd redan har en löneperiod
+        // som överlappar med det angivna datumintervallet.
+        public async Task<bool> HasOverlappingPeriodAsync(
+            int employeeId,
+            DateTime validFrom,
+            DateTime? validTo)
+        {
+            return await _context.Salaries
+                .AnyAsync(s =>
+                    s.EmployeeId == employeeId &&
+                    (validTo == null || s.ValidFrom <= validTo) &&
+                    (s.ValidTo == null || s.ValidTo >= validFrom));
+        }
         // Hämtar den aktuella lönen för en anställd.
         // En lönepost är aktuell om dagens datum ligger inom giltighetsperioden.
         public async Task<Salary?> GetCurrentByEmployeeIdAsync(
@@ -84,6 +96,11 @@ namespace NPJL.Infrastructure.Repositories
             {
                 _context.Salaries.Remove(salary);
             }
+        }
+        // Sparar samtliga ändringar i databasen.
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

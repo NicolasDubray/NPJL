@@ -16,5 +16,16 @@ namespace NPJL.Application.Interfaces
         // Hämtar den aktuella lönen för en anställd.
         // Returnerar null om ingen aktuell lön finns.
         Task<Salary?> GetCurrentByEmployeeIdAsync(int employeeId);
+
+        // Kontrollerar om en anställd redan har en löneperiod
+        // som överlappar med det angivna datumintervallet.
+        Task<bool> HasOverlappingPeriodAsync(
+            int employeeId,
+            DateTime validFrom,
+            DateTime? validTo);
+
+        // Sparar samtliga ändringar i databasen.
+        Task SaveChangesAsync();
     }
 }
+

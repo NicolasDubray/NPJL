@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NPJL.Api.Development;
+using NPJL.Application.Interfaces;
 using NPJL.Infrastructure;
 using NPJL.Infrastructure.Identity;
 using NPJL.Infrastructure.Persistence;
+using NPJL.Infrastructure.Services;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +58,7 @@ builder.Services
 
 var app = builder.Build();
 
-// Kör migrationer automatiskt i utvecklingsmiljö
+// Kör migrationer och utvecklingsseedning.
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -64,18 +66,22 @@ if (app.Environment.IsDevelopment())
     var dbContext = scope.ServiceProvider
         .GetRequiredService<ApplicationDbContext>();
 
+    // Kör eventuella väntande databasmigrationer.
     await dbContext.Database.MigrateAsync();
-}
-// Skapar Identity-roller om de saknas
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
 
     var roleManager = scope.ServiceProvider
         .GetRequiredService<RoleManager<IdentityRole>>();
 
+    var userManager = scope.ServiceProvider
+        .GetRequiredService<UserManager<ApplicationUser>>();
+
+    // Roller måste finnas innan användaren tilldelas en roll.
     await IdentityRoleSeeder.SeedRolesAsync(roleManager);
+
+    // Skapar testanställd och tillhörande inloggningskonto.
+    await TestEmployeeSeeder.SeedAsync(dbContext, userManager);
 }
+
 app.UseHttpsRedirection();
 
 // Autentisering måste köras före behörighetskontroll

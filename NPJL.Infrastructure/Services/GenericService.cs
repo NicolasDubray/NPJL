@@ -27,10 +27,6 @@ namespace NPJL.Infrastructure.Services
         public Task<TEntity?> GetByIdAsync(int id)
         {
             return _repository.GetByIdAsync(id);
-        }
-
-
-
-        
+        }        
     }
 }
