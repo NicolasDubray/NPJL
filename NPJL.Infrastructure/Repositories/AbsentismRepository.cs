@@ -1,47 +1,93 @@
-﻿using NPJL.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿
+using Microsoft.EntityFrameworkCore;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
+using NPJL.Infrastructure.Persistence;
 
 namespace NPJL.Infrastructure.Repositories
 {
-    public class AbsentismRepository
+    // Repository för hantering av anställdas frånvaro.
+    // Implementerar IAbsentismRepository och dess CRUD-operationer.
+    public class AbsentismRepository : IAbsentismRepository
     {
+        private readonly ApplicationDbContext _context;
+
+        public AbsentismRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // Hämtar samtliga frånvaroposter.
         public async Task<IReadOnlyList<Absentism>> GetAllAsync()
         {
-            // Implementera logik för att hämta alla frånvaroposter från databasen.
-            throw new NotImplementedException();
+            return await _context.Absentisms
+                .AsNoTracking()
+                .ToListAsync();
         }
+
+        // Hämtar en frånvaropost via ID.
         public async Task<Absentism?> GetByIdAsync(int id)
         {
-            // Implementera logik för att hämta en frånvaropost via dess ID från databasen.
-            throw new NotImplementedException();
+            return await _context.Absentisms
+                .FirstOrDefaultAsync(a => a.Id == id);
         }
+
+        // Hämtar samtliga frånvaroposter för en anställd.
         public async Task<IReadOnlyList<Absentism>> GetByEmployeeIdAsync(int employeeId)
         {
-            // Implementera logik för att hämta frånvaroposter för en viss anställd från databasen.
-            throw new NotImplementedException();
+            return await _context.Absentisms
+                .AsNoTracking()
+                .Where(a => a.EmployeeId == employeeId)
+                .OrderByDescending(a => a.StartTime)
+                .ToListAsync();
         }
-        public async Task<IReadOnlyList<Absentism>> GetByDateRangeAsync(int employeeId, DateTime startDate, DateTime endDate)
+
+        // Hämtar frånvaroposter som överlappar ett angivet datumintervall.
+        public async Task<IReadOnlyList<Absentism>> GetByDateRangeAsync(
+            int employeeId,
+            DateTime startDate,
+            DateTime endDate)
         {
-            // Implementera logik för att hämta frånvaroposter inom ett angivet datumintervall från databasen.
-            throw new NotImplementedException();
+            return await _context.Absentisms
+                .AsNoTracking()
+                .Where(a =>
+                    a.EmployeeId == employeeId &&
+                    a.StartTime <= endDate &&
+                    a.EndTime >= startDate)
+                .OrderBy(a => a.StartTime)
+                .ToListAsync();
         }
+
+        // Registrerar en ny frånvaropost.
         public async Task<Absentism> CreateAsync(Absentism absentism)
         {
-            // Implementera logik för att registrera en ny frånvaropost i databasen.
-            throw new NotImplementedException();
+            await _context.Absentisms.AddAsync(absentism);
+
+            return absentism;
         }
-        public async Task UpdateAsync(Absentism absentism)
+
+        // Uppdaterar en befintlig frånvaropost.
+        public Task UpdateAsync(Absentism absentism)
         {
-            // Implementera logik för att uppdatera en befintlig frånvaropost i databasen.
-            throw new NotImplementedException();
+            _context.Absentisms.Update(absentism);
+
+            return Task.CompletedTask;
         }
+
+        // Tar bort en frånvaropost via ID.
         public async Task DeleteAsync(int id)
         {
-            // Implementera logik för att ta bort en frånvaropost via dess ID från databasen.
-            throw new NotImplementedException();
+            var absentism = await _context.Absentisms.FindAsync(id);
+
+            if (absentism != null)
+            {
+                _context.Absentisms.Remove(absentism);
+            }
         }
-        
+        // Sparar ändringar i databasen.
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

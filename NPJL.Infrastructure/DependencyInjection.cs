@@ -42,11 +42,13 @@ namespace NPJL.Infrastructure
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<ISalaryRepository, SalaryRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<IAbsentismRepository, AbsentismRepository>();
 
             // Registrerar services
             services.AddScoped<NPJL.Application.Services.CustomerService>();
             services.AddScoped<SalaryService>();
             services.AddScoped<NPJL.Application.Services.EmployeeService>();
+            services.AddScoped<NPJL.Application.Services.AbsentismService>();
 
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
