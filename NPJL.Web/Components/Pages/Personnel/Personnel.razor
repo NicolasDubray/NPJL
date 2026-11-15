@@ -1,5 +1,192 @@
-﻿<h3>Personnel</h3>
+﻿@page "/personnel"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using NPJL.Application.DTOs.Employees
+@using NPJL.Web.Services
+
+@inject EmployeeApiService EmployeeApiService
+
+<PageTitle>Personalregister</PageTitle>
+
+<AuthorizeView Roles="Administrator">
+    <Authorized>
+
+        <div class="personnel-page">
+
+            <div class="page-heading">
+                <div>
+                    <h1>Personalregister</h1>
+                    <p>Översikt över företagets anställda.</p>
+                </div>
+
+                <button type="button" class="add-employee-button">
+                    + Add Employee
+                </button>
+            </div>
+
+            @if (isLoading)
+            {
+                <p class="status-message">Hämtar personaluppgifter...</p>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="error-message">@errorMessage</p>
+            }
+            else if (employees.Count == 0)
+            {
+                <p class="status-message">Det finns inga registrerade anställda.</p>
+            }
+            else
+            {
+                <div class="personnel-summary">
+                    <span>
+                        Totalt antal anställda:
+                        <strong>@employees.Count</strong>
+                    </span>
+
+                    <span>
+                        Aktiva:
+                        <strong>@employees.Count(e => e.IsActive)</strong>
+                    </span>
+                </div>
+
+                <!-- Sökning och statusfilter -->
+                <div class="personnel-search">
+
+                    <input type="search"
+                           placeholder="Search by name or personal number..."
+                           @bind="searchText"
+                           @bind:event="oninput" />
+
+                    <select @bind="statusFilter">
+                        <option value="All">Alla anställda</option>
+                        <option value="Active">Aktiva</option>
+                        <option value="Inactive">Inaktiva</option>
+                    </select>
+
+                </div>
+
+                @if (filteredEmployees.Count == 0)
+                {
+                    <p class="status-message">
+                        Inga anställda matchade dina sökkriterier.
+                    </p>
+                }
+                else
+                {
+                    <div class="table-container">
+                        <table class="personnel-table">
+                            <thead>
+                                <tr>
+                                    <th>Namn</th>
+                                    <th>Personnummer</th>
+                                    <th>Semesterdagar</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var employee in filteredEmployees)
+                                {
+                                    <tr>
+                                        <td>@employee.FirstName @employee.LastName</td>
+                                        <td>@employee.SSN</td>
+                                        <td>@employee.VacationDays</td>
+                                        <td>
+                                            @if (employee.IsActive)
+                                            {
+                                                <span class="employee-status active">
+                                                    Aktiv
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="employee-status inactive">
+                                                    Inaktiv
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+
+        </div>
+
+    </Authorized>
+
+    <NotAuthorized>
+        <div class="personnel-page">
+            <h1>Åtkomst nekad</h1>
+            <p>
+                Du behöver administratörsbehörighet
+                för att visa personalregistret.
+            </p>
+        </div>
+    </NotAuthorized>
+
+    <Authorizing>
+        <div class="personnel-page">
+            <p class="status-message">Kontrollerar behörighet...</p>
+        </div>
+    </Authorizing>
+
+</AuthorizeView>
 
 @code {
+    private List<EmployeeDto> employees = new();
 
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    // Innehåller texten som administratören skriver i sökfältet.
+    private string searchText = string.Empty;
+
+    // Anger vilket statusfilter som är valt.
+    private string statusFilter = "All";
+
+    // Filtrerar personalregistret utifrån söktext och status.
+    private List<EmployeeDto> filteredEmployees =>
+        employees
+            .Where(e =>
+                // Kontrollerar söktexten.
+                (
+                    string.IsNullOrWhiteSpace(searchText) ||
+                    $"{e.FirstName} {e.LastName}"
+                        .Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                    e.SSN.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                )
+                &&
+                // Kontrollerar vald status.
+                (
+                    statusFilter == "All" ||
+                    (statusFilter == "Active" && e.IsActive) ||
+                    (statusFilter == "Inactive" && !e.IsActive)
+                )
+            )
+            .ToList();
+
+    // Hämtar personaluppgifter när sidan öppnas.
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            employees = (await EmployeeApiService.GetAllAsync()).ToList();
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Kunde inte nå servern. Kontrollera API-anslutningen.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ett oväntat fel uppstod när personaluppgifterna skulle hämtas.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
 }

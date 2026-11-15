@@ -768,7 +768,7 @@ namespace NPJL.Infrastructure.Persistence.Migrations
 
                     b.ToTable("AspNetUsers", null, t =>
                         {
-                            t.HasCheckConstraint("CK_AspNetUsers_ExactlyOneOwner", "(\r\n    [CustomerId] IS NOT NULL\r\n    AND [EmployeeId] IS NULL\r\n)\r\nOR\r\n(\r\n    [CustomerId] IS NULL\r\n    AND [EmployeeId] IS NOT NULL\r\n)");
+                            t.HasCheckConstraint("CK_AspNetUsers_ExactlyOneOwner", "(\r\n    [CustomerId] IS NOT NULL\r\n    AND [EmployeeId] IS NULL\r\n)\r\nOR\r\n(\r\n    [CustomerId] IS NULL\r\n    AND [EmployeeId] IS NOT NULL\r\n)\r\nOR\r\n(\r\n    [CustomerId] IS NULL\r\n    AND [EmployeeId] IS NULL\r\n)");
                         });
                 });
 

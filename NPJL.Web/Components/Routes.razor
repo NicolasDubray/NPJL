@@ -1,8 +1,26 @@
-﻿<Router AppAssembly="@typeof(Program).Assembly">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData"
-                   DefaultLayout="@typeof(Layout.MainLayout)" />
+        <AuthorizeRouteView RouteData="@routeData"
+                            DefaultLayout="@typeof(Layout.MainLayout)">
+
+            <NotAuthorized>
+                <LayoutView Layout="@typeof(Layout.MainLayout)">
+                    <h2>Åtkomst nekad</h2>
+                    <p>Du saknar behörighet för att visa den här sidan.</p>
+                </LayoutView>
+            </NotAuthorized>
+
+            <Authorizing>
+                <LayoutView Layout="@typeof(Layout.MainLayout)">
+                    <p>Kontrollerar behörighet...</p>
+                </LayoutView>
+            </Authorizing>
+
+        </AuthorizeRouteView>
     </Found>
+
     <NotFound>
         <LayoutView Layout="@typeof(Layout.MainLayout)">
             <h1>Sidan kunde inte hittas</h1>

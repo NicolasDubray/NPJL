@@ -1,5 +1,5 @@
 ﻿using NPJL.Application.DTOs.Employees;
-using NPJL.Application.DTOs.Employees.NPJL.Application.DTOs.Employees;
+using NPJL.Application.DTOs.Employees;
 using NPJL.Application.Interfaces;
 using NPJL.Domain.Entities;
 using System;

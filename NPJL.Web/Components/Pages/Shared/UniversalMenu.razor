@@ -6,6 +6,14 @@
 
 <nav class="universal-menu">
 
+    <!-- Klickyta som stänger Admin-menyn vid klick utanför den -->
+    @if (adminMenuOpen)
+    {
+        <div class="admin-dropdown-overlay"
+             @onclick="CloseAdminMenu">
+        </div>
+    }
+
     <!-- Hamburgerknapp för mobil -->
     <button class="menu-toggle"
             @onclick="ToggleMenu"
@@ -15,9 +23,10 @@
         <span></span>
         <span></span>
     </button>
-    
+
     <!-- Menylänkar -->
-    <div class="menu-links @(menuOpen ? "open" : "")">
+    <div class="menu-links @(menuOpen ? "open" : "")"
+         @onclick="CloseAdminMenu">
 
         <a href="/" @onclick="CloseMenu">Home</a>
         <a href="#Booking" @onclick="CloseMenu">Booking</a>
@@ -38,16 +47,73 @@
 
                 <!-- Anställd – visas när anställd eller administratör är inloggad -->
                 @if (auth.User.IsInRole("Employee") ||
-                    auth.User.IsInRole("Administrator"))
+                     auth.User.IsInRole("Administrator"))
                 {
                     <a href="#" @onclick:preventDefault="true">Assigned orders</a>
                 }
 
-                <!-- Administratör – visas när administratör är inloggad -->
+                <!-- Administratör – samlar administrativa funktioner i en dropdown -->
                 @if (auth.User.IsInRole("Administrator"))
                 {
-                    <a href="#" @onclick:preventDefault="true">Orders</a>
-                    <a href="#" @onclick:preventDefault="true">Add customers</a>
+                    <div class="admin-dropdown"
+                         @onclick:stopPropagation="true">
+
+                        <button type="button"
+                                class="admin-dropdown-toggle"
+                                @onclick="ToggleAdminMenu"
+                                aria-expanded="@adminMenuOpen">
+                            Admin
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+
+                        @if (adminMenuOpen)
+                        {
+                            <div class="admin-dropdown-menu">
+
+                                <!-- Personnel management -->
+                                <a href="/personnel" @onclick="CloseMenu">
+                                    Personnel Register
+                                </a>
+
+                                <a href="#" @onclick:preventDefault="true">
+                                    Absence Management
+                                </a>
+
+                                <a href="#" @onclick:preventDefault="true">
+                                    Time Reporting
+                                </a>
+
+                                <!-- Customer management -->
+                                <a href="#" @onclick:preventDefault="true">
+                                    Customer Register
+                                </a>
+
+                                <!-- Bookings and sales -->
+                                <a href="#" @onclick:preventDefault="true">
+                                    Booking Management
+                                </a>
+
+                                <a href="#" @onclick:preventDefault="true">
+                                    Invoicing
+                                </a>
+
+                                <a href="#" @onclick:preventDefault="true">
+                                    Quote Requests
+                                </a>
+
+                                <a href="#" @onclick:preventDefault="true">
+                                    Orders
+                                </a>
+
+                                <!-- System administration -->
+                                <a href="#" @onclick:preventDefault="true">
+                                    User Management
+                                </a>
+
+                            </div>
+                        }
+
+                    </div>
                 }
 
                 <!-- Konto -->
@@ -80,16 +146,37 @@
     // Håller reda på om mobilmenyn är öppen eller stängd.
     private bool menuOpen = false;
 
+    // Håller reda på om administratörsmenyn är öppen eller stängd.
+    private bool adminMenuOpen = false;
+
     // Öppnar eller stänger mobilmenyn.
     private void ToggleMenu()
     {
         menuOpen = !menuOpen;
+
+        if (!menuOpen)
+        {
+            adminMenuOpen = false;
+        }
     }
 
-    // Stänger mobilmenyn när en länk väljs.
+    // Öppnar eller stänger administratörsmenyn.
+    private void ToggleAdminMenu()
+    {
+        adminMenuOpen = !adminMenuOpen;
+    }
+
+    // Stänger endast administratörsmenyn.
+    private void CloseAdminMenu()
+    {
+        adminMenuOpen = false;
+    }
+
+    // Stänger menyerna när en länk väljs.
     private void CloseMenu()
     {
         menuOpen = false;
+        adminMenuOpen = false;
     }
 
     // Loggar ut användaren och återställer autentiseringstillståndet.

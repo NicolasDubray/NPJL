@@ -74,12 +74,15 @@ if (app.Environment.IsDevelopment())
 
     var userManager = scope.ServiceProvider
         .GetRequiredService<UserManager<ApplicationUser>>();
-
+    
     // Roller måste finnas innan användaren tilldelas en roll.
     await IdentityRoleSeeder.SeedRolesAsync(roleManager);
 
     // Skapar testanställd och tillhörande inloggningskonto.
     await TestEmployeeSeeder.SeedAsync(dbContext, userManager);
+
+    // Skapar testadministratör och tillhörande inloggningskonto.
+    await AdministratorSeeder.SeedAsync(userManager);
 }
 
 app.UseHttpsRedirection();

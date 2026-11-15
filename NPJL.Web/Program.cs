@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
 // Registrerar HttpClient för kommunikation med NPJL.Api
 builder.Services.AddHttpClient("NPJL.Api", client =>
 {
@@ -18,13 +19,14 @@ builder.Services.AddHttpClient("NPJL.Api", client =>
             "API BaseUrl is missing from configuration."));
 });
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<EmployeeApiService>();
 
 // Registrerar autentiseringshantering
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 
 builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
     provider.GetRequiredService<CustomAuthenticationStateProvider>());
-
+builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 // Registrerar skyddad sessionslagring för autentisering.
 builder.Services.AddScoped<ProtectedSessionStorage>();
