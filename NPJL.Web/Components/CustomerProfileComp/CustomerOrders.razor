@@ -6,47 +6,46 @@
 @using NPJL.Web.Services
 @inject BookingService BookingService
 @inject CurrentCustomerService CurrentCustomerService
-@inject CustomerService CustomerService
-
-
 
 <div class="container">
-    
-    
     <div class="row justify-content-center">
         <div class="col-12 col-lg-9">
             <h1 class="h1 mb-4 text-center">Orders</h1>
-
-    <h3 class="h4 ">Ongoing orders</h3>
-    @if (bookings != null)
-    {
-
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <table class="table table-striped table-hover table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Order</th>
-                            <th>Start</th>
-                            <th>End</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var b in bookings.Where(b => b.Status == "Received" || b.Status == "InProgress")
-                        .OrderByDescending(b => b.StartTime))
-                        {
-                            <tr>
-                                <td>@b.Id</td>
-                                <td>@b.StartTime</td>
-                                <td>@b.EndTime</td>
-                                <td>@b.Status</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            @if (errorMessage != null)
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+            @if (bookings != null)
+            {
+                <h3 class="h4">Ongoing orders</h3>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <table class="table table-striped table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var b in bookings.Where(b => b.Status == "Received" || b.Status == "InProgress")
+                                    .OrderByDescending(b => b.StartTime))
+                                {
+                                    <tr>
+                                        <td>@b.Id</td>
+                                        <td>@b.StartTime</td>
+                                        <td>@b.EndTime</td>
+                                        <td>@b.Status</td>
+                                        <td><button class="btn btn-sm btn-outline-secondary" @onclick="() => selectedBookingId = b.Id">Request</button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
                 <h3 class="h4">Order history</h3>
                 <div class="card mb-4 shadow-sm">
@@ -56,7 +55,8 @@
                                 <tr><th>Order</th><th>Start</th><th>End</th><th>Status</th></tr>
                             </thead>
                             <tbody>
-                                @foreach (var b in bookings.Where(b=> b.Status=="Finished"))
+                                @foreach (var b in bookings.Where(b => b.Status == "Finished")
+                                    .OrderByDescending(b => b.StartTime))
                                 {
                                     <tr>
                                         <td>@b.Id</td>
@@ -65,27 +65,43 @@
                                         <td>@b.Status</td>
                                     </tr>
                                 }
-                                
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-        
-    }
+                @if (selectedBookingId != null && customer != null)
+                {
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-body">
+                            <h5>Request for order @selectedBookingId</h5>
+                            <OrderRequestForm CustomerId="customer.Id" BookingId="selectedBookingId.Value" />
+                            <button class="btn btn-link" @onclick="() => selectedBookingId = null">Close</button>
+                        </div>
+                    </div>
+                }
+            }
         </div>
-        </div>
+    </div>
 </div>
 
 @code {
     private List<BookingDto>? bookings;
     private CustomerDto? customer;
+    private int? selectedBookingId;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        customer = await CurrentCustomerService.GetCurrentCustomerAsync();
-        if (customer == null) return; //ersätts med try-catch.
-        bookings = await BookingService.GetByCustomerIdAsync(customer.Id);
+        try
+        {
+            customer = await CurrentCustomerService.GetCurrentCustomerAsync();
+            if (customer == null) return;
+            bookings = await BookingService.GetByCustomerIdAsync(customer.Id);
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not load your orders, please try again";
+        }
     }
-
 }
