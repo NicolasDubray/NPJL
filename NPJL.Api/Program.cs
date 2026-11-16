@@ -7,7 +7,6 @@ using NPJL.Infrastructure;
 using NPJL.Infrastructure.Identity;
 using NPJL.Infrastructure.Persistence;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -376,6 +376,48 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("NPJL.Domain.Entities.CustomerRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsReviewed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("Customer_Request", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Customer_Request_Type", "[Type] IN ('Cancel', 'Update')");
+                        });
+                });
+
             modelBuilder.Entity("NPJL.Domain.Entities.Employee", b =>
                 {
                     b.Property<int>("Id")
@@ -873,6 +915,25 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("NPJL.Domain.Entities.CustomerRequest", b =>
+                {
+                    b.HasOne("NPJL.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NPJL.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("NPJL.Domain.Entities.Employment", b =>
