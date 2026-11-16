@@ -76,5 +76,23 @@ namespace NPJL.Infrastructure.Repositories
                 _context.Employees.Remove(employee);
             }
         }
+        // Hämtar en anställd med tillhörande information.
+        public async Task<Employee?> GetWithDetailsByIdAsync(int id)
+        {
+            return await _context.Employees
+                .AsNoTracking()
+                .Include(e => e.Employments)
+                .Include(e => e.ContactInfos)
+                .Include(e => e.BankInfos)
+                .Include(e => e.Salaries)
+                .Include(e => e.Absentisms)
+                .Include(e => e.TimeReports)
+                .Include(e => e.TeamEmployees)
+                    .ThenInclude(te => te.Team)
+                        .ThenInclude(t => t.BookingTeams)
+                            .ThenInclude(bt => bt.Booking)
+                                .ThenInclude(b => b.Customer)
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
     }
 }

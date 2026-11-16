@@ -95,21 +95,20 @@ namespace NPJL.Api.Controllers
             return user?.EmployeeId;
         }
 
-        // Registrerar frånvaro för den inloggade anställda.
-        // Administratörer kan också registrera frånvaro åt andra anställda.
+
+        // Registers absence for the currently logged-in employee.
+        // Employees may register Sick Leave and Care of Sick Child.
         [HttpPost]
         public async Task<IActionResult> Create(
             [FromBody] CreateAbsentismDto request)
         {
-            int employeeId;
-
+            // Administrators must use the separate employee endpoint.
             if (User.IsInRole("Administrator"))
             {
-                // Administratören måste ange vilken anställd frånvaron gäller.
                 return BadRequest(
-                    "Administratörsregistrering kräver ett separat employeeId.");
+                    "Administrator registration requires a separate employeeId.");
             }
-
+            
             var currentEmployeeId = await GetCurrentEmployeeIdAsync();
 
             if (currentEmployeeId == null)
@@ -117,17 +116,22 @@ namespace NPJL.Api.Controllers
                 return Forbid();
             }
 
-            employeeId = currentEmployeeId.Value;
+            // Employees may only register Sick Leave or Care of Sick Child.
+            if (request.Type != NPJL.Domain.Enums.AbsentismType.Sick &&
+                request.Type != NPJL.Domain.Enums.AbsentismType.CareOfSickChild)
+            {
+                return Forbid();
+            }
 
             try
             {
                 var absentism = await _absentismService.CreateAsync(
-                    employeeId,
+                    currentEmployeeId.Value,
                     request);
 
                 return CreatedAtAction(
                     nameof(GetByEmployeeId),
-                    new { employeeId },
+                    new { employeeId = currentEmployeeId.Value },
                     absentism);
             }
             catch (ArgumentException ex)
@@ -135,6 +139,7 @@ namespace NPJL.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
         // Administratörer kan registrera frånvaro åt valfri anställd.
         [HttpPost("employee/{employeeId:int}")]
         [Authorize(Roles = "Administrator")]
@@ -162,30 +167,43 @@ namespace NPJL.Api.Controllers
         // Uppdaterar en frånvaropost.
         // Administratörer får uppdatera valfri frånvaropost.
         // Anställda får endast uppdatera sin egen frånvaro.
+
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(
             int id,
             [FromBody] UpdateAbsentismDto request)
         {
-            // Kontrollerar behörighet för vanliga anställda.
-            if (!User.IsInRole("Administrator"))
+            var isAdministrator = User.IsInRole("Administrator");
+
+            // Retrieve the existing absence entry.
+            var existingAbsence = await _absentismService.GetByIdAsync(id);
+
+            if (existingAbsence == null)
+            {
+                return NotFound();
+            }
+
+            if (!isAdministrator)
             {
                 var currentEmployeeId = await GetCurrentEmployeeIdAsync();
 
-                if (currentEmployeeId == null)
+                // Employees may only update their own absence entries.
+                if (currentEmployeeId == null ||
+                    existingAbsence.EmployeeId != currentEmployeeId.Value)
                 {
                     return Forbid();
                 }
 
-                // Hämtar frånvaroposten för att kontrollera ägarskap.
-                var existingAbsence = await _absentismService.GetByIdAsync(id);
-
-                if (existingAbsence == null)
+                // Employees may only edit Sick Leave and Care of Sick Child.
+                if (existingAbsence.Type != NPJL.Domain.Enums.AbsentismType.Sick &&
+                    existingAbsence.Type != NPJL.Domain.Enums.AbsentismType.CareOfSickChild)
                 {
-                    return NotFound();
+                    return Forbid();
                 }
 
-                if (existingAbsence.EmployeeId != currentEmployeeId.Value)
+                // Employees cannot change an absence to Vacation or Parental Leave.
+                if (request.Type != NPJL.Domain.Enums.AbsentismType.Sick &&
+                    request.Type != NPJL.Domain.Enums.AbsentismType.CareOfSickChild)
                 {
                     return Forbid();
                 }
@@ -193,20 +211,21 @@ namespace NPJL.Api.Controllers
 
             try
             {
-                var updatedAbsence = await _absentismService.UpdateAsync(id, request);
+                var updated = await _absentismService.UpdateAsync(id, request);
 
-                if (updatedAbsence == null)
+                if (updated == null)
                 {
                     return NotFound();
                 }
 
-                return Ok(updatedAbsence);
+                return Ok(updated);
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
 
         // Tar bort en frånvaropost.
         // Endast administratörer får utföra denna åtgärd.
@@ -228,7 +247,7 @@ namespace NPJL.Api.Controllers
         }
 
 
-
+        
 
     }
 }

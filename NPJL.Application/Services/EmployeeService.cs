@@ -1,10 +1,7 @@
-﻿using NPJL.Application.DTOs.Employees;
+﻿
 using NPJL.Application.DTOs.Employees;
 using NPJL.Application.Interfaces;
 using NPJL.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace NPJL.Application.Services
 {
@@ -40,6 +37,7 @@ namespace NPJL.Application.Services
         {
             return await _employeeRepository.GetBySSNAsync(ssn);
         }
+
         // Hämtar samtliga anställda som DTO.
         public async Task<IReadOnlyList<EmployeeDto>> GetAllDetailsAsync()
         {
@@ -48,7 +46,6 @@ namespace NPJL.Application.Services
             return employees.Select(MapToEmployeeDto).ToList();
         }
 
-        
         // Hämtar en anställd via ID som DTO.
         public async Task<EmployeeDto?> GetDetailsByIdAsync(int id)
         {
@@ -57,6 +54,13 @@ namespace NPJL.Application.Services
             return employee == null ? null : MapToEmployeeDto(employee);
         }
 
+        // Hämtar en anställd med tillhörande information som DTO.
+        public async Task<EmployeeDetailsDto?> GetDetailsWithRelationsByIdAsync(int id)
+        {
+            var employee = await _employeeRepository.GetWithDetailsByIdAsync(id);
+
+            return employee == null ? null : MapToEmployeeDetailsDto(employee);
+        }
 
         // Omvandlar Employee-entiteten till EmployeeDto.
         private static EmployeeDto MapToEmployeeDto(Employee employee)
@@ -71,6 +75,113 @@ namespace NPJL.Application.Services
                 VacationDays = employee.VacationDays
             };
         }
+
+        // Omvandlar Employee-entiteten till EmployeeDetailsDto.
+        private static EmployeeDetailsDto MapToEmployeeDetailsDto(Employee employee)
+        {
+            return new EmployeeDetailsDto
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                SSN = employee.SSN,
+                IsActive = employee.IsActive,
+                VacationDays = employee.VacationDays,
+
+                // Kontaktuppgifter.
+                ContactInfos = employee.ContactInfos
+                    .Select(c => new ContactInfoDto
+                    {
+                        Id = c.Id,
+                        Address = c.Address,
+                        Telephone = c.Telephone,
+                        Email = c.Email
+                    })
+                    .ToList(),
+
+                // Anställningshistorik.
+                Employments = employee.Employments
+                    .Select(e => new EmploymentDto
+                    {
+                        Id = e.Id,
+                        HireType = e.HireType,
+                        HireDate = e.HireDate,
+                        Role = e.Role,
+                        Department = e.Department,
+                        NumWorkingHours = e.NumWorkingHours
+                    })
+                    .ToList(),
+
+                // Salary history.
+                Salaries = employee.Salaries
+                    .Select(s => new SalaryDto
+                    {
+                        Id = s.Id,
+                        Amount = s.Amount,
+                        ValidFrom = s.ValidFrom,
+                        ValidTo = s.ValidTo,
+                        CreatedAt = s.CreatedAt
+                    })
+                    .ToList(),
+
+                // Banking details.
+                BankInfos = employee.BankInfos
+                    .Select(b => new BankInfoDto
+                    {
+                        Id = b.Id,
+                        AccountHolderName = b.AccountHolderName,
+                        AccountHolderType = b.AccountHolderType.ToString(),
+                        BankName = b.BankName,
+                        BankAccountNumber = b.BankAccountNumber,
+                        ClearingNumber = b.ClearingNumber
+                    })
+                    .ToList(),
+
+                // Frånvarohistorik.
+                Absentisms = employee.Absentisms
+                    .Select(a => new AbsentismDto
+                    {
+                        Id = a.Id,
+                        StartTime = a.StartTime,
+                        EndTime = a.EndTime,
+                        Type = a.Type
+                    })
+                    .ToList(),
+
+                // Tidrapporter.
+                TimeReports = employee.TimeReports
+                    .Select(t => new TimeReportDto
+                    {
+                        Id = t.Id,
+                        BookingId = t.BookingId,
+                        StartTime = t.StartTime,
+                        EndTime = t.EndTime,
+                        BreakMinutes = t.BreakMinutes,
+                        Description = t.Description,
+                        CreatedAt = t.CreatedAt
+                    })
+                    .ToList(),
+
+                // Team och tillhörande order.
+                TeamAssignments = employee.TeamEmployees
+                    .SelectMany(te => te.Team.BookingTeams
+                        .Select(bt => new TeamAssignmentDto
+                        {
+                            TeamId = te.TeamId,
+                            BookingId = bt.BookingId,
+                            BookingStartTime = bt.Booking.StartTime,
+                            BookingEndTime = bt.Booking.EndTime,
+                            BookingStatus = bt.Booking.Status.ToString(),
+                            CustomerId = bt.Booking.CustomerId,
+
+                            CustomerName = bt.Booking.Customer.IsCompany
+                                ? bt.Booking.Customer.CompanyName ?? string.Empty
+                                : $"{bt.Booking.Customer.FirstName} {bt.Booking.Customer.LastName}"
+                        }))
+                    .ToList()
+            };
+        }
+        
         // Hämtar samtliga aktiva anställda som DTO.
         public async Task<IReadOnlyList<EmployeeDto>> GetAllActiveDetailsAsync()
         {

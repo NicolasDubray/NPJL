@@ -24,7 +24,7 @@ namespace NPJL.Application.Services
         {
             return _absentismRepository.GetByEmployeeIdAsync(employeeId);
         }
-
+        
         // Hämtar frånvaroposter för en anställd inom ett datumintervall.
         public Task<IReadOnlyList<Absentism>> GetByDateRangeAsync(
             int employeeId,
@@ -85,9 +85,27 @@ namespace NPJL.Application.Services
             if (request.StartTime >= request.EndTime)
             {
                 throw new ArgumentException(
-                    "Sluttiden måste vara senare än starttiden.");
+                    "\r\nThe end time must be later than the start time.");
             }
+            // Check whether the employee already has an overlapping absence.
+            var existingAbsences = await _absentismRepository.GetByDateRangeAsync(
+                employeeId,
+                request.StartTime,
+                request.EndTime);
+            
+            var hasOverlap = existingAbsences.Any(a =>
+                a.StartTime < request.EndTime &&
+                a.EndTime > request.StartTime);
 
+            if (hasOverlap)
+            {
+                throw new ArgumentException(
+                    "The absence period overlaps with an existing absence.");
+            }
+            if (!Enum.IsDefined(typeof(NPJL.Domain.Enums.AbsentismType), request.Type))
+            {
+                throw new ArgumentException("Invalid absence type.");
+            }
             var absentism = new Absentism
             {
                 EmployeeId = employeeId,
@@ -106,6 +124,7 @@ namespace NPJL.Application.Services
         }
 
         // Uppdaterar en befintlig frånvaropost.
+
         public async Task<AbsentismDto?> UpdateAsync(
             int id,
             UpdateAbsentismDto request)
@@ -118,14 +137,37 @@ namespace NPJL.Application.Services
             if (request.StartTime >= request.EndTime)
             {
                 throw new ArgumentException(
-                    "Sluttiden måste vara senare än starttiden.");
+                    "The end time must be later than the start time.");
             }
 
+            if (!Enum.IsDefined(typeof(NPJL.Domain.Enums.AbsentismType), request.Type))
+            {
+                throw new ArgumentException("Invalid absence type.");
+            }
+
+            // Retrieve the existing absence entry.
             var absentism = await _absentismRepository.GetByIdAsync(id);
 
             if (absentism == null)
             {
                 return null;
+            }
+
+            // Check for overlapping absences belonging to the same employee.
+            var existingAbsences = await _absentismRepository.GetByDateRangeAsync(
+                absentism.EmployeeId,
+                request.StartTime,
+                request.EndTime);
+
+            var hasOverlap = existingAbsences.Any(a =>
+                a.Id != id &&
+                a.StartTime < request.EndTime &&
+                a.EndTime > request.StartTime);
+
+            if (hasOverlap)
+            {
+                throw new ArgumentException(
+                    "The absence period overlaps with an existing absence.");
             }
 
             absentism.StartTime = request.StartTime;
@@ -137,6 +179,7 @@ namespace NPJL.Application.Services
 
             return MapToDto(absentism);
         }
+
         // Tar bort en frånvaropost.
         // Anropas endast av administratörer via API:t.
         public async Task<bool> DeleteAsync(int id)
@@ -155,6 +198,6 @@ namespace NPJL.Application.Services
             return true;
         }
 
-
+        
     }
 }

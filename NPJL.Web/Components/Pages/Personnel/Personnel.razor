@@ -6,7 +6,7 @@
 
 @inject EmployeeApiService EmployeeApiService
 
-<PageTitle>Personalregister</PageTitle>
+<PageTitle>Personnel Register</PageTitle>
 
 <AuthorizeView Roles="Administrator">
     <Authorized>
@@ -15,8 +15,8 @@
 
             <div class="page-heading">
                 <div>
-                    <h1>Personalregister</h1>
-                    <p>Översikt över företagets anställda.</p>
+                    <h1>Personnel Register</h1>
+                    <p>Overview of the company's employees.</p>
                 </div>
 
                 <button type="button" class="add-employee-button">
@@ -26,7 +26,7 @@
 
             @if (isLoading)
             {
-                <p class="status-message">Hämtar personaluppgifter...</p>
+                <p class="status-message">Fetching employee information...</p>
             }
             else if (!string.IsNullOrEmpty(errorMessage))
             {
@@ -34,7 +34,7 @@
             }
             else if (employees.Count == 0)
             {
-                <p class="status-message">Det finns inga registrerade anställda.</p>
+                <p class="status-message">There are no registered employees.</p>
             }
             else
             {
@@ -89,7 +89,11 @@
                                 @foreach (var employee in filteredEmployees)
                                 {
                                     <tr>
-                                        <td>@employee.FirstName @employee.LastName</td>
+                                        <td>
+                                            <a href="@($"/personnel/{employee.Id}")">
+                                                @employee.FirstName @employee.LastName
+                                            </a>
+                                        </td>
                                         <td>@employee.SSN</td>
                                         <td>@employee.VacationDays</td>
                                         <td>
@@ -120,17 +124,19 @@
 
     <NotAuthorized>
         <div class="personnel-page">
-            <h1>Åtkomst nekad</h1>
+            <h1>
+                Access denied
+            </h1>
             <p>
-                Du behöver administratörsbehörighet
-                för att visa personalregistret.
+                You need administrator privileges
+                to view the personnel registry.
             </p>
         </div>
     </NotAuthorized>
 
     <Authorizing>
         <div class="personnel-page">
-            <p class="status-message">Kontrollerar behörighet...</p>
+            <p class="status-message">Checking permissions...</p>
         </div>
     </Authorizing>
 
@@ -168,7 +174,7 @@
                 )
             )
             .ToList();
-
+    
     // Hämtar personaluppgifter när sidan öppnas.
     protected override async Task OnInitializedAsync()
     {

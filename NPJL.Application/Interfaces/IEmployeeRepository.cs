@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using NPJL.Application.DTOs.Employees;
 using NPJL.Domain.Entities;
 
 namespace NPJL.Application.Interfaces
@@ -16,5 +15,8 @@ namespace NPJL.Application.Interfaces
 
         // Hämtar samtliga aktiva anställda.
         Task<IReadOnlyList<Employee>> GetAllActiveAsync();
+
+        // Hämtar en anställd med tillhörande information.
+        Task<Employee?> GetWithDetailsByIdAsync(int id);
     }
 }

@@ -2,6 +2,7 @@ using NPJL.Web.Components;
 using NPJL.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using NPJL.Web.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,10 @@ builder.Services.AddHttpClient("NPJL.Api", client =>
 });
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmployeeApiService>();
-
+builder.Services.AddScoped<AbsentismApiService>();
+// Registrerar gemensamma skatteinställningar.
+builder.Services.Configure<TaxSettings>(
+    builder.Configuration.GetSection("TaxSettings"));
 // Registrerar autentiseringshantering
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 

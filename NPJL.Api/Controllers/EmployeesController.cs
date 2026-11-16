@@ -70,6 +70,69 @@ namespace NPJL.Api.Controllers
 
             return Ok(employee);
         }
+        // Hämtar detaljerad information om en anställd,
+        // inklusive tillhörande kontaktuppgifter, anställningar,
+        // frånvaro, tidrapporter samt Team- och orderkopplingar.
+        //
+        // Administratörer får hämta valfri anställd.
+        // Övriga användare får endast hämta sina egna uppgifter.
+        [HttpGet("{id:int}/details")]
+        public async Task<IActionResult> GetDetails(int id)
+        {
+            // Administratörer får tillgång till alla anställda.
+            if (!User.IsInRole("Administrator"))
+            {
+                // Hämtar den inloggade användarens EmployeeId.
+                var currentEmployeeId = await GetCurrentEmployeeIdAsync();
+
+                // Användaren saknar koppling till en anställd.
+                if (currentEmployeeId == null)
+                {
+                    return Forbid();
+                }
+
+                // Kontrollerar att användaren endast hämtar sina egna uppgifter.
+                if (currentEmployeeId.Value != id)
+                {
+                    return Forbid();
+                }
+            }
+
+            // Hämtar den anställdes information inklusive relationer.
+            var employee = await _employeeService.GetDetailsWithRelationsByIdAsync(id);
+
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(employee);
+        }
+
+        // Hämtar detaljerad information om den inloggade anställda.
+        // Användaren behöver inte ange sitt eget EmployeeId.
+        [HttpGet("me/details")]
+        public async Task<IActionResult> GetMyDetails()
+        {
+            var currentEmployeeId = await GetCurrentEmployeeIdAsync();
+
+            // Användaren saknar koppling till en anställd.
+            if (currentEmployeeId == null)
+            {
+                return Forbid();
+            }
+
+            var employee = await _employeeService.GetDetailsWithRelationsByIdAsync(
+                currentEmployeeId.Value);
+
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(employee);
+        }
+
         // Hämtar EmployeeId för den inloggade användaren.
         private async Task<int?> GetCurrentEmployeeIdAsync()
         {
@@ -79,9 +142,9 @@ namespace NPJL.Api.Controllers
             {
                 return null;
             }
-
+            
             var user = await _userManager.FindByIdAsync(userId);
-
+            
             return user?.EmployeeId;
         }
         // Hämtar samtliga aktiva anställda.

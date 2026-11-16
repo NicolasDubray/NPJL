@@ -1,0 +1,407 @@
+﻿@page "/personnel/{Id:int}"
+@page "/my-profile"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using NPJL.Application.DTOs.Employees
+@using NPJL.Web.Services
+@using System.Net
+@using Microsoft.Extensions.Options
+@using NPJL.Web.Configuration
+@using NPJL.Application.DTOs.Absentisms
+@using NPJL.Domain.Enums
+@using System.Security.Claims
+
+@inject IOptions<TaxSettings> TaxSettings
+@inject EmployeeApiService EmployeeApiService
+@inject AbsentismApiService AbsentismApiService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Employee Details</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="personnel-page">
+
+            @if (isLoading)
+            {
+                <p>Fetching employee information...</p>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="error-message">@errorMessage</p>
+            }
+            else if (employee != null)
+            {
+                <div class="page-heading">
+                    <div>
+                        <h1>@employee.FirstName @employee.LastName</h1>
+                        <p>Detailed employee information</p>
+                    </div>
+                </div>
+
+                <section>
+                    <h2>Basic Information</h2>
+
+                    <p><strong>Personal Identity Number:</strong> @employee.SSN</p>
+                    <p><strong>Vacation Days:</strong> @employee.VacationDays</p>
+                    <p>
+                        <strong>Status:</strong>
+                        @(employee.IsActive ? "Active" : "Inactive")
+                    </p>
+                </section>
+
+                <section>
+                    <h2>Contact Information</h2>
+
+                    @if (employee.ContactInfos.Count == 0)
+                    {
+                        <p>No contact information registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var contact in employee.ContactInfos)
+                        {
+                            <div>
+                                <p><strong>Address:</strong> @contact.Address</p>
+                                <p><strong>Phone:</strong> @contact.Telephone</p>
+                                <p><strong>Email:</strong> @contact.Email</p>
+                            </div>
+                        }
+                    }
+                </section>
+
+                <section>
+                    <h2>Employment History</h2>
+
+                    @if (employee.Employments.Count == 0)
+                    {
+                        <p>No employment information registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var employment in employee.Employments)
+                        {
+                            <div>
+                                <p><strong>Employment Type:</strong> @employment.HireType</p>
+                                <p><strong>Hire Date:</strong> @employment.HireDate.ToShortDateString()</p>
+                                <p><strong>Role:</strong> @employment.Role</p>
+                                <p><strong>Department:</strong> @employment.Department</p>
+                                <p><strong>Contracted Working Hours per Week:</strong> @employment.NumWorkingHours</p>
+                            </div>
+                        }
+                    }
+                </section>
+
+                <section>
+                    <h2>Salary Information</h2>
+
+                    @if (employee.Salaries.Count == 0)
+                    {
+                        <p>No salary information registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var salary in employee.Salaries.OrderByDescending(s => s.ValidFrom))
+                        {
+                            <div>
+                                <p><strong>Salary Amount:</strong> @salary.Amount.ToString("N2") SEK</p>
+                                <p><strong>Valid From:</strong> @salary.ValidFrom.ToShortDateString()</p>
+                                <p>
+                                    <strong>Valid To:</strong>
+                                    @(salary.ValidTo?.ToShortDateString() ?? "Ongoing")
+                                </p>
+                                <p><strong>Registered:</strong> @salary.CreatedAt.ToShortDateString()</p>
+                            </div>
+                        }
+                    }
+                </section>
+                <section>
+                    <h2>Tax Information</h2>
+
+                    <p>
+                        <strong>Tax Rate:</strong>
+                        @TaxSettings.Value.TaxRatePercent.ToString("F2") %
+                    </p>
+
+                    <p>
+                        <strong>Tax Type:</strong> Standard tax rate
+                    </p>
+
+                    <p>
+                        <strong>Tax Calculation:</strong> Estimated
+                    </p>
+                </section>
+                <section>
+                    <h2>Banking Details</h2>
+
+                    @if (employee.BankInfos.Count == 0)
+                    {
+                        <p>No banking details registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var bank in employee.BankInfos)
+                        {
+                            <div>
+                                <p><strong>Account Holder:</strong> @bank.AccountHolderName</p>
+                                <p><strong>Account Holder Type:</strong> @bank.AccountHolderType</p>
+                                <p><strong>Bank:</strong> @bank.BankName</p>
+                                <p><strong>Clearing Number:</strong> @bank.ClearingNumber</p>
+                                <p><strong>Account Number:</strong> @bank.BankAccountNumber</p>
+                            </div>
+                        }
+                    }
+                </section>
+
+                
+                <section>
+                    <h2>Absence History</h2>
+
+                    @if (employee.Absentisms.Count == 0)
+                    {
+                        <p>No absence information registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var absence in employee.Absentisms.OrderByDescending(a => a.StartTime))
+                        {
+                            <div>
+                                <p><strong>Type:</strong> @absence.Type</p>
+                                <p><strong>From:</strong> @absence.StartTime.ToString("g")</p>
+                                <p><strong>To:</strong> @absence.EndTime.ToString("g")</p>
+                            </div>
+                        }
+                    }
+                    
+                    <h3>Register Absence</h3>
+
+                    <EditForm Model="absenceForm"
+                              OnValidSubmit="RegisterAbsenceAsync"
+                              Context="editFormContext">
+                        <div>
+                            <label>Absence Type</label>
+                            <InputSelect @bind-Value="absenceForm.Type">
+                                <option value="@AbsentismType.Sick">Sick Leave</option>
+                                <option value="@AbsentismType.CareOfSickChild">
+                                    Care of Sick Child (VAB)
+                                </option>
+
+                                @if (isAdministrator)
+                                {
+                                    <option value="@AbsentismType.Vacation">Vacation</option>
+                                    <option value="@AbsentismType.ParentalLeave">
+                                        Parental Leave
+                                    </option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div>
+                            <label>Start Date and Time</label>
+                            <InputDate @bind-Value="absenceForm.StartTime"
+                                       Type="InputDateType.DateTimeLocal" />
+                        </div>
+
+                        <div>
+                            <label>End Date and Time</label>
+                            <InputDate @bind-Value="absenceForm.EndTime"
+                                       Type="InputDateType.DateTimeLocal" />
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(absenceMessage))
+                        {
+                            <p class="success-message">@absenceMessage</p>
+                        }
+
+                        @if (!string.IsNullOrEmpty(absenceErrorMessage))
+                        {
+                            <p class="error-message">@absenceErrorMessage</p>
+                        }
+
+                        <button type="submit" disabled="@isSubmittingAbsence">
+                            @(isSubmittingAbsence ? "Registering..." : "Register Absence")
+                        </button>
+                    </EditForm>
+                </section>
+
+
+                <section>
+                    <h2>Time Reports</h2>
+
+                    @if (employee.TimeReports.Count == 0)
+                    {
+                        <p>No time reports registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var report in employee.TimeReports)
+                        {
+                            <div>
+                                <p><strong>Order Number:</strong> @report.BookingId</p>
+                                <p><strong>Start:</strong> @report.StartTime.ToString("g")</p>
+                                <p><strong>End:</strong> @report.EndTime.ToString("g")</p>
+                                <p><strong>Break (minutes):</strong> @report.BreakMinutes</p>
+                                <p><strong>Description:</strong> @report.Description</p>
+                            </div>
+                        }
+                    }
+                </section>
+
+                <section>
+                    <h2>Team and Associated Orders</h2>
+
+                    @if (employee.TeamAssignments.Count == 0)
+                    {
+                        <p>This employee is not currently assigned to any registered team.</p>
+                    }
+                    else
+                    {
+                        @foreach (var assignment in employee.TeamAssignments)
+                        {
+                            <div>
+                                <p><strong>Team:</strong> @assignment.TeamId</p>
+                                <p><strong>Order:</strong> @assignment.BookingId</p>
+                                <p><strong>Customer:</strong> @assignment.CustomerName</p>
+                                <p><strong>Order Status:</strong> @assignment.BookingStatus</p>
+                                <p><strong>Order Start:</strong> @assignment.BookingStartTime.ToString("g")</p>
+                                <p><strong>Order End:</strong> @assignment.BookingEndTime.ToString("g")</p>
+                            </div>
+                        }
+                    }
+                </section>
+            }
+
+        </div>
+    </Authorized>
+
+    <NotAuthorized>
+        <p>You must be logged in to view employee details.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private EmployeeDetailsDto? employee;
+
+    private bool isLoading = true;
+    private string? errorMessage;
+    
+    // Fetches detailed information about the selected employee.
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        employee = null;
+        
+        try
+        {
+            var authState = await AuthenticationStateProvider
+                .GetAuthenticationStateAsync();
+
+            isAdministrator = authState.User.IsInRole("Administrator");
+
+            // Fetches the selected employee or the currently logged-in employee.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            if (employee == null)
+            {
+                errorMessage = "The employee could not be found.";
+            }
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            errorMessage = "You do not have permission to view these employee details.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            errorMessage = "The employee could not be found.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not reach the server. Please check the API connection.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred while fetching employee details.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    private bool isAdministrator;
+    private bool isSubmittingAbsence;
+    private string? absenceMessage;
+    private string? absenceErrorMessage;
+    
+    private AbsenceFormModel absenceForm = new();
+
+    private class AbsenceFormModel
+    {
+        public DateTime StartTime { get; set; } = DateTime.Now;
+
+        public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
+
+        public AbsentismType Type { get; set; } = AbsentismType.Sick;
+    }
+    private async Task RegisterAbsenceAsync()
+    {
+        isSubmittingAbsence = true;
+        absenceMessage = null;
+        absenceErrorMessage = null;
+        
+        try
+        {
+            var request = new CreateAbsentismDto
+            {
+                StartTime = absenceForm.StartTime,
+                EndTime = absenceForm.EndTime,
+                Type = absenceForm.Type
+            };
+
+            if (isAdministrator)
+            {
+                await AbsentismApiService.CreateForEmployeeAsync(employee.Id, request);
+            }
+            else
+            {
+                await AbsentismApiService.CreateAsync(request);
+            }
+
+            // Refresh employee information after successful registration.
+            employee = Id > 0
+    ? await EmployeeApiService.GetDetailsAsync(Id)
+    : await EmployeeApiService.GetMyDetailsAsync();
+
+            absenceMessage = "Absence registered successfully.";
+
+            absenceForm = new AbsenceFormModel
+            {
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddHours(1),
+                Type = AbsentismType.Sick
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            absenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Could not register absence."
+                : ex.Message;
+        }
+        catch (Exception)
+        {
+            absenceErrorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            isSubmittingAbsence = false;
+        }
+    }
+    
+}

@@ -47,8 +47,9 @@
 
                 <!-- Anställd – visas när anställd eller administratör är inloggad -->
                 @if (auth.User.IsInRole("Employee") ||
-                     auth.User.IsInRole("Administrator"))
+     auth.User.IsInRole("Administrator"))
                 {
+                    <a href="/my-profile" @onclick="CloseMenu">My Profile</a>
                     <a href="#" @onclick:preventDefault="true">Assigned orders</a>
                 }
 
@@ -178,7 +179,7 @@
         menuOpen = false;
         adminMenuOpen = false;
     }
-
+    
     // Loggar ut användaren och återställer autentiseringstillståndet.
     private async Task Logout()
     {

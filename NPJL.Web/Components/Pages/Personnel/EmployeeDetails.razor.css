@@ -1,0 +1,83 @@
+﻿
+/* Huvudlayout */
+.personnel-page {
+    width: 100%;
+    padding: 30px 7%;
+    color: #222;
+}
+
+/* Sidhuvud */
+.page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #AEAEAE;
+}
+
+    .page-heading h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .page-heading p {
+        margin: 6px 0 0;
+        color: #666;
+    }
+
+/* Informationssektioner */
+.personnel-page section {
+    margin-bottom: 22px;
+    padding: 20px 24px;
+    background-color: #DCDCDC;
+    border-radius: 5px;
+}
+
+    .personnel-page section h2 {
+        margin: 0 0 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #AEAEAE;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .personnel-page section p {
+        margin: 8px 0;
+        line-height: 1.5;
+    }
+
+    /* Separata poster i historiklistor */
+    .personnel-page section div + div {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid #AEAEAE;
+    }
+
+/* Meddelanden */
+.error-message {
+    padding: 15px 20px;
+    background-color: #C5C5C5;
+    border-radius: 5px;
+    color: #8B2020;
+}
+
+/* Mobilanpassning */
+@media (max-width: 768px) {
+    .personnel-page {
+        padding: 20px 12px;
+    }
+
+    .page-heading h1 {
+        font-size: 24px;
+    }
+
+    .personnel-page section {
+        padding: 16px;
+    }
+
+        .personnel-page section h2 {
+            font-size: 18px;
+        }
+}
