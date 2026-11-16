@@ -168,6 +168,7 @@ namespace NPJL.Api.Controllers
         // Administratörer får uppdatera valfri frånvaropost.
         // Anställda får endast uppdatera sin egen frånvaro.
 
+
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(
             int id,
@@ -207,6 +208,15 @@ namespace NPJL.Api.Controllers
                 {
                     return Forbid();
                 }
+
+                // Employees cannot edit an absence that has already started.
+                var currentTime = DateTime.Now;
+
+                if (existingAbsence.StartTime <= currentTime ||
+                    request.StartTime <= currentTime)
+                {
+                    return Forbid();
+                }
             }
 
             try
@@ -227,6 +237,7 @@ namespace NPJL.Api.Controllers
         }
 
 
+
         // Tar bort en frånvaropost.
         // Endast administratörer får utföra denna åtgärd.
         [HttpDelete("{id:int}")]
@@ -242,7 +253,7 @@ namespace NPJL.Api.Controllers
             }
 
             await _absentismService.DeleteAsync(id);
-
+            
             return NoContent();
         }
 

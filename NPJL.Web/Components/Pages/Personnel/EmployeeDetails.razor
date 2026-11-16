@@ -21,7 +21,7 @@
 <AuthorizeView>
     <Authorized>
         <div class="personnel-page">
-
+            
             @if (isLoading)
             {
                 <p>Fetching employee information...</p>
@@ -154,6 +154,8 @@
                 </section>
 
                 
+                
+               
                 <section>
                     <h2>Absence History</h2>
 
@@ -169,26 +171,147 @@
                                 <p><strong>Type:</strong> @absence.Type</p>
                                 <p><strong>From:</strong> @absence.StartTime.ToString("g")</p>
                                 <p><strong>To:</strong> @absence.EndTime.ToString("g")</p>
+
+                                @if (isAdministrator ||
+                                    (absence.StartTime > DateTime.Now &&
+                                    (absence.Type == AbsentismType.Sick ||
+                                     absence.Type == AbsentismType.CareOfSickChild)))
+                                {
+                                    <button type="button"
+                                            class="absence-edit-button"
+                                            @onclick="() => StartEditingAbsence(absence)">
+                                        Edit
+                                    </button>
+                                }
+
+                                @if (isAdministrator)
+                                {
+                                    <button type="button"
+                                            class="absence-delete-button"
+                                            disabled="@isDeletingAbsence"
+                                            @onclick="() => ConfirmDeleteAbsence(absence.Id)">
+                                        Delete
+                                    </button>
+
+                                    @if (confirmingDeleteAbsenceId == absence.Id)
+                                    {
+                                        <div class="delete-confirmation">
+                                            <p>Are you sure you want to delete this absence entry?</p>
+
+                                            <button type="button"
+                                                    class="absence-confirm-button"
+                                                    disabled="@isDeletingAbsence"
+                                                    @onclick="() => DeleteAbsenceAsync(absence.Id)">
+                                                @(isDeletingAbsence ? "Deleting..." : "Confirm Delete")
+                                            </button>
+
+                                            <button type="button"
+                                                    class="absence-cancel-button"
+                                                    disabled="@isDeletingAbsence"
+                                                    @onclick="CancelDeleteAbsence">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    }
+                                }
+
+                                @if (editingAbsenceId == absence.Id)
+                                {
+                                    <EditForm Model="editAbsenceForm"
+                                              OnValidSubmit="UpdateAbsenceAsync"
+                                              Context="absenceEditContext"
+                                              class="absence-form">
+
+                                        <h3>Edit Absence</h3>
+                                        
+                                        <div>
+                                            <label>Absence Type</label>
+                                            <InputSelect @bind-Value="editAbsenceForm.Type">
+                                                <option value="@AbsentismType.Sick">
+                                                    Sick Leave
+                                                </option>
+
+                                                <option value="@AbsentismType.CareOfSickChild">
+                                                    Care of Sick Child (VAB)
+                                                </option>
+
+                                                @if (isAdministrator)
+                                                {
+                                                    <option value="@AbsentismType.Vacation">
+                                                        Vacation
+                                                    </option>
+
+                                                    <option value="@AbsentismType.ParentalLeave">
+                                                        Parental Leave
+                                                    </option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+
+                                        <div>
+                                            <label>Start Date and Time</label>
+                                            <InputDate @bind-Value="editAbsenceForm.StartTime"
+                                                       Type="InputDateType.DateTimeLocal" />
+                                        </div>
+
+                                        <div>
+                                            <label>End Date and Time</label>
+                                            <InputDate @bind-Value="editAbsenceForm.EndTime"
+                                                       Type="InputDateType.DateTimeLocal" />
+                                        </div>
+
+                                        <button type="submit"
+                                                class="absence-edit-button"
+                                                disabled="@isUpdatingAbsence">
+                                            @(isUpdatingAbsence ? "Saving..." : "Save Changes")
+                                        </button>
+
+                                        <button type="button"
+                                                class="absence-cancel-button"
+                                                disabled="@isUpdatingAbsence"
+                                                @onclick="CancelEditingAbsence">
+                                            Cancel
+                                        </button>
+                                    </EditForm>
+                                }
                             </div>
                         }
                     }
-                    
+
+                    @if (!string.IsNullOrEmpty(editAbsenceMessage))
+                    {
+                        <p class="success-message">@editAbsenceMessage</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(editAbsenceErrorMessage))
+                    {
+                        <p class="error-message">@editAbsenceErrorMessage</p>
+                    }
+
                     <h3>Register Absence</h3>
 
                     <EditForm Model="absenceForm"
                               OnValidSubmit="RegisterAbsenceAsync"
-                              Context="editFormContext">
+                              Context="editFormContext"
+                              class="absence-form">
+
                         <div>
                             <label>Absence Type</label>
                             <InputSelect @bind-Value="absenceForm.Type">
-                                <option value="@AbsentismType.Sick">Sick Leave</option>
+                                <option value="@AbsentismType.Sick">
+                                    Sick Leave
+                                </option>
+
                                 <option value="@AbsentismType.CareOfSickChild">
                                     Care of Sick Child (VAB)
                                 </option>
 
                                 @if (isAdministrator)
                                 {
-                                    <option value="@AbsentismType.Vacation">Vacation</option>
+                                    <option value="@AbsentismType.Vacation">
+                                        Vacation
+                                    </option>
+
                                     <option value="@AbsentismType.ParentalLeave">
                                         Parental Leave
                                     </option>
@@ -207,7 +330,7 @@
                             <InputDate @bind-Value="absenceForm.EndTime"
                                        Type="InputDateType.DateTimeLocal" />
                         </div>
-                        
+
                         @if (!string.IsNullOrEmpty(absenceMessage))
                         {
                             <p class="success-message">@absenceMessage</p>
@@ -218,13 +341,17 @@
                             <p class="error-message">@absenceErrorMessage</p>
                         }
 
-                        <button type="submit" disabled="@isSubmittingAbsence">
+                        <button type="submit"
+                                class="absence-edit-button"
+                                disabled="@isSubmittingAbsence">
                             @(isSubmittingAbsence ? "Registering..." : "Register Absence")
                         </button>
                     </EditForm>
                 </section>
 
+                
 
+                
                 <section>
                     <h2>Time Reports</h2>
 
@@ -287,6 +414,7 @@
 
     private bool isLoading = true;
     private string? errorMessage;
+    private int? confirmingDeleteAbsenceId;
     
     // Fetches detailed information about the selected employee.
     protected override async Task OnParametersSetAsync()
@@ -341,7 +469,14 @@
     private string? absenceErrorMessage;
     
     private AbsenceFormModel absenceForm = new();
+    private int? editingAbsenceId;
+    private bool isUpdatingAbsence;
+    private bool isDeletingAbsence;
 
+    private string? editAbsenceMessage;
+    private string? editAbsenceErrorMessage;
+
+    private AbsenceFormModel editAbsenceForm = new();
     private class AbsenceFormModel
     {
         public DateTime StartTime { get; set; } = DateTime.Now;
@@ -404,4 +539,136 @@
         }
     }
     
+    // Starts editing an existing absence entry.
+    private void StartEditingAbsence(
+    NPJL.Application.DTOs.Employees.AbsentismDto absence)
+    {
+        editingAbsenceId = absence.Id;
+
+        editAbsenceForm = new AbsenceFormModel
+        {
+            StartTime = absence.StartTime,
+            EndTime = absence.EndTime,
+            Type = absence.Type
+        };
+
+        editAbsenceMessage = null;
+        editAbsenceErrorMessage = null;
+    }
+
+    // Cancels the current absence editing operation.
+    private void CancelEditingAbsence()
+    {
+        editingAbsenceId = null;
+        editAbsenceForm = new AbsenceFormModel();
+
+        editAbsenceMessage = null;
+        editAbsenceErrorMessage = null;
+    }
+
+    // Updates an existing absence entry.
+    private async Task UpdateAbsenceAsync()
+    {
+        if (editingAbsenceId == null)
+        {
+            return;
+        }
+
+        isUpdatingAbsence = true;
+        editAbsenceMessage = null;
+        editAbsenceErrorMessage = null;
+
+        try
+        {
+            var request = new UpdateAbsentismDto
+            {
+                StartTime = editAbsenceForm.StartTime,
+                EndTime = editAbsenceForm.EndTime,
+                Type = editAbsenceForm.Type
+            };
+
+            await AbsentismApiService.UpdateAsync(
+                editingAbsenceId.Value,
+                request);
+
+            // Refresh employee information after successful update.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            editingAbsenceId = null;
+
+            editAbsenceMessage = "Absence updated successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Could not update absence."
+                : ex.Message;
+        }
+        catch (Exception)
+        {
+            editAbsenceErrorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            isUpdatingAbsence = false;
+        }
+    }
+
+    // Deletes an existing absence entry.
+    private async Task DeleteAbsenceAsync(int absenceId)
+    {
+        if (!isAdministrator)
+        {
+            return;
+        }
+
+        isDeletingAbsence = true;
+        editAbsenceMessage = null;
+        editAbsenceErrorMessage = null;
+
+        try
+        {
+            await AbsentismApiService.DeleteAsync(absenceId);
+
+            // Refresh employee information after successful deletion.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            if (editingAbsenceId == absenceId)
+            {
+                editingAbsenceId = null;
+            }
+            confirmingDeleteAbsenceId = null;
+            editAbsenceMessage = "Absence deleted successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Could not delete absence."
+                : ex.Message;
+        }
+        catch (Exception)
+        {
+            editAbsenceErrorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            isDeletingAbsence = false;
+        }
+    }
+    
+    // Requests confirmation before deleting an absence entry.
+    private void ConfirmDeleteAbsence(int absenceId)
+    {
+        confirmingDeleteAbsenceId = absenceId;
+    }
+
+    // Cancels the pending deletion.
+    private void CancelDeleteAbsence()
+    {
+        confirmingDeleteAbsenceId = null;
+    }
 }

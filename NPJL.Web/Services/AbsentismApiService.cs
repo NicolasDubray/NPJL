@@ -74,5 +74,49 @@ namespace NPJL.Web.Services
             return await response.Content.ReadFromJsonAsync<AbsentismDto>();
         }
 
+        // Updates an existing absence entry.
+        // Authorization and editing restrictions are handled by the API.
+        public async Task<AbsentismDto?> UpdateAsync(
+            int id,
+            UpdateAbsentismDto request)
+        {
+            var client = _authService.CreateAuthenticatedClient();
+
+            var response = await client.PutAsJsonAsync(
+                $"api/Absentisms/{id}",
+                request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+
+                throw new HttpRequestException(
+                    errorMessage,
+                    null,
+                    response.StatusCode);
+            }
+
+            return await response.Content.ReadFromJsonAsync<AbsentismDto>();
+        }
+
+        // Deletes an existing absence entry.
+        // Requires Administrator authorization.
+        public async Task DeleteAsync(int id)
+        {
+            var client = _authService.CreateAuthenticatedClient();
+
+            var response = await client.DeleteAsync(
+                $"api/Absentisms/{id}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+
+                throw new HttpRequestException(
+                    errorMessage,
+                    null,
+                    response.StatusCode);
+            }
+        }
     }
 }
