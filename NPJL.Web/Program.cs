@@ -21,7 +21,10 @@ builder.Services.AddHttpClient("NPJL.Api", client =>
 });
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmployeeApiService>();
+builder.Services.AddScoped<ContactInfoApiService>();
 builder.Services.AddScoped<AbsentismApiService>();
+builder.Services.AddScoped<BankInfoApiService>();
+
 // Registrerar gemensamma skatteinställningar.
 builder.Services.Configure<TaxSettings>(
     builder.Configuration.GetSection("TaxSettings"));

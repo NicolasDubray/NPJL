@@ -15,6 +15,9 @@
 @inject EmployeeApiService EmployeeApiService
 @inject AbsentismApiService AbsentismApiService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ContactInfoApiService ContactInfoApiService
+@inject NavigationManager NavigationManager
+@inject BankInfoApiService BankInfoApiService
 
 <PageTitle>Employee Details</PageTitle>
 
@@ -50,89 +53,208 @@
                     </p>
                 </section>
 
-                <section>
-                    <h2>Contact Information</h2>
+                
+                    <section>
+                        <h2>Contact Information</h2>
 
-                    @if (employee.ContactInfos.Count == 0)
-                    {
-                        <p>No contact information registered.</p>
-                    }
-                    else
-                    {
-                        @foreach (var contact in employee.ContactInfos)
+                        @if (employee.ContactInfos.Count == 0)
                         {
-                            <div>
-                                <p><strong>Address:</strong> @contact.Address</p>
-                                <p><strong>Phone:</strong> @contact.Telephone</p>
-                                <p><strong>Email:</strong> @contact.Email</p>
-                            </div>
+                            <p>No contact information registered.</p>
                         }
-                    }
-                </section>
-
-                <section>
-                    <h2>Employment History</h2>
-
-                    @if (employee.Employments.Count == 0)
-                    {
-                        <p>No employment information registered.</p>
-                    }
-                    else
-                    {
-                        @foreach (var employment in employee.Employments)
+                        else
                         {
-                            <div>
-                                <p><strong>Employment Type:</strong> @employment.HireType</p>
-                                <p><strong>Hire Date:</strong> @employment.HireDate.ToShortDateString()</p>
-                                <p><strong>Role:</strong> @employment.Role</p>
-                                <p><strong>Department:</strong> @employment.Department</p>
-                                <p><strong>Contracted Working Hours per Week:</strong> @employment.NumWorkingHours</p>
-                            </div>
+                            @foreach (var contact in employee.ContactInfos)
+                            {
+                                <div>
+                                    <p><strong>Address:</strong> @contact.Address</p>
+                                    <p><strong>Phone:</strong> @contact.Telephone</p>
+                                    <p><strong>Email:</strong> @contact.Email</p>
+
+                                    @if (isAdministrator || isMyProfilePage)
+                                    {
+                                        <button type="button"
+                                        class="absence-edit-button"
+                                        @onclick="() => StartEditingContactInfo(contact)">
+                                            Edit
+                                        </button>
+                                    }
+
+                                    @if (editingContactInfoId == contact.Id)
+                                    {
+                                        <EditForm Model="contactInfoForm"
+                                        OnValidSubmit="SaveContactInfoAsync"
+                                        Context="contactEditContext"
+                                        class="absence-form">
+
+                                            <h3>Edit Contact Information</h3>
+
+                                            <div>
+                                                <label>Address</label>
+                                                <InputText @bind-Value="contactInfoForm.Address" />
+                                            </div>
+
+                                            <div>
+                                                <label>Phone</label>
+                                                <InputText @bind-Value="contactInfoForm.Telephone" />
+                                            </div>
+
+                                            <div>
+                                                <label>Email</label>
+                                                <InputText @bind-Value="contactInfoForm.Email" />
+                                            </div>
+
+                                            <button type="submit"
+                                            class="absence-edit-button"
+                                            disabled="@isSavingContactInfo">
+                                                @(isSavingContactInfo ? "Saving..." : "Save Changes")
+                                            </button>
+
+                                            <button type="button"
+                                            class="absence-cancel-button"
+                                            disabled="@isSavingContactInfo"
+                                            @onclick="CancelEditingContactInfo">
+                                                Cancel
+                                            </button>
+                                        </EditForm>
+                                    }
+                                </div>
+                            }
                         }
-                    }
-                </section>
 
-                <section>
-                    <h2>Salary Information</h2>
-
-                    @if (employee.Salaries.Count == 0)
-                    {
-                        <p>No salary information registered.</p>
-                    }
-                    else
-                    {
-                        @foreach (var salary in employee.Salaries.OrderByDescending(s => s.ValidFrom))
+                    @if ((isAdministrator || isMyProfilePage)
+&& employee.ContactInfos.Count == 0
+&& !isCreatingContactInfo)
                         {
-                            <div>
-                                <p><strong>Salary Amount:</strong> @salary.Amount.ToString("N2") SEK</p>
-                                <p><strong>Valid From:</strong> @salary.ValidFrom.ToShortDateString()</p>
-                                <p>
-                                    <strong>Valid To:</strong>
-                                    @(salary.ValidTo?.ToShortDateString() ?? "Ongoing")
-                                </p>
-                                <p><strong>Registered:</strong> @salary.CreatedAt.ToShortDateString()</p>
-                            </div>
+                            <button type="button"
+                            class="absence-edit-button"
+                            @onclick="StartCreatingContactInfo">
+                                Add Contact Information
+                            </button>
                         }
-                    }
-                </section>
-                <section>
-                    <h2>Tax Information</h2>
 
-                    <p>
-                        <strong>Tax Rate:</strong>
-                        @TaxSettings.Value.TaxRatePercent.ToString("F2") %
-                    </p>
+                        @if (isCreatingContactInfo)
+                        {
+                            <EditForm Model="contactInfoForm"
+                            OnValidSubmit="CreateContactInfoAsync"
+                            Context="newContactContext"
+                            class="absence-form">
 
-                    <p>
-                        <strong>Tax Type:</strong> Standard tax rate
-                    </p>
+                                <h3>New Contact Information</h3>
 
-                    <p>
-                        <strong>Tax Calculation:</strong> Estimated
-                    </p>
-                </section>
+                                <div>
+                                    <label>Address</label>
+                                    <InputText @bind-Value="contactInfoForm.Address" />
+                                </div>
+
+                                <div>
+                                    <label>Phone</label>
+                                    <InputText @bind-Value="contactInfoForm.Telephone" />
+                                </div>
+
+                                <div>
+                                    <label>Email</label>
+                                    <InputText @bind-Value="contactInfoForm.Email" />
+                                </div>
+
+                                <button type="submit"
+                                class="absence-edit-button"
+                                disabled="@isSubmittingContactInfo">
+                                    @(isSubmittingContactInfo ? "Saving..." : "Save Contact Information")
+                                </button>
+
+                                <button type="button"
+                                class="absence-cancel-button"
+                                disabled="@isSubmittingContactInfo"
+                                @onclick="CancelCreatingContactInfo">
+                                    Cancel
+                                </button>
+                            </EditForm>
+                        }
+
+                        @if (!string.IsNullOrEmpty(contactInfoMessage))
+                        {
+                            <p class="success-message">@contactInfoMessage</p>
+                        }
+
+                        @if (!string.IsNullOrEmpty(contactInfoErrorMessage))
+                        {
+                            <p class="error-message">@contactInfoErrorMessage</p>
+                        }
+                    </section>
+
+                    <section>
+                        <h2>Employment History</h2>
+
+                        @if (employee.Employments.Count == 0)
+                        {
+                            <p>No employment information registered.</p>
+                        }
+                        else
+                        {
+                            @foreach (var employment in employee.Employments)
+                            {
+                                <div>
+                                    <p><strong>Employment Type:</strong> @employment.HireType</p>
+                                    <p><strong>Hire Date:</strong> @employment.HireDate.ToShortDateString()</p>
+                                    <p><strong>Role:</strong> @employment.Role</p>
+                                    <p><strong>Department:</strong> @employment.Department</p>
+                                    <p><strong>Contracted Working Hours per Week:</strong> @employment.NumWorkingHours</p>
+                                </div>
+                            }
+                        }
+                    </section>
+
+                    <section>
+                        <h2>Salary Information</h2>
+
+                        @if (employee.Salaries.Count == 0)
+                        {
+                            <p>No salary information registered.</p>
+                        }
+                        else
+                        {
+                            @foreach (var salary in employee.Salaries.OrderByDescending(s => s.ValidFrom))
+                            {
+                                <div>
+                                    <p><strong>Salary Amount:</strong> @salary.Amount.ToString("N2") SEK</p>
+                                    <p><strong>Valid From:</strong> @salary.ValidFrom.ToShortDateString()</p>
+                                    <p>
+                                        <strong>Valid To:</strong>
+                                        @(salary.ValidTo?.ToShortDateString() ?? "Ongoing")
+                                    </p>
+                                    <p><strong>Registered:</strong> @salary.CreatedAt.ToShortDateString()</p>
+                                </div>
+                            }
+                        }
+                    </section>
+                    <section>
+                        <h2>Tax Information</h2>
+
+                        <p>
+                            <strong>Tax Rate:</strong>
+                            @TaxSettings.Value.TaxRatePercent.ToString("F2") %
+                        </p>
+
+                        <p>
+                            <strong>Tax Type:</strong> Standard tax rate
+                        </p>
+
+                        <p>
+                            <strong>Tax Calculation:</strong> Estimated
+                        </p>
+                    </section>
                 <section>
                     <h2>Banking Details</h2>
+
+                    @if (!string.IsNullOrWhiteSpace(bankInfoMessage))
+                    {
+                        <p>@bankInfoMessage</p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(bankInfoErrorMessage))
+                    {
+                        <p class="error-message">@bankInfoErrorMessage</p>
+                    }
 
                     @if (employee.BankInfos.Count == 0)
                     {
@@ -148,266 +270,369 @@
                                 <p><strong>Bank:</strong> @bank.BankName</p>
                                 <p><strong>Clearing Number:</strong> @bank.ClearingNumber</p>
                                 <p><strong>Account Number:</strong> @bank.BankAccountNumber</p>
-                            </div>
-                        }
-                    }
-                </section>
 
-                
-                
-               
-                <section>
-                    <h2>Absence History</h2>
-
-                    @if (employee.Absentisms.Count == 0)
-                    {
-                        <p>No absence information registered.</p>
-                    }
-                    else
-                    {
-                        @foreach (var absence in employee.Absentisms.OrderByDescending(a => a.StartTime))
-                        {
-                            <div>
-                                <p><strong>Type:</strong> @absence.Type</p>
-                                <p><strong>From:</strong> @absence.StartTime.ToString("g")</p>
-                                <p><strong>To:</strong> @absence.EndTime.ToString("g")</p>
-
-                                @if (isAdministrator ||
-                                    (absence.StartTime > DateTime.Now &&
-                                    (absence.Type == AbsentismType.Sick ||
-                                     absence.Type == AbsentismType.CareOfSickChild)))
+                                @if (isAdministrator || isMyProfilePage)
                                 {
-                                    <button type="button"
-                                            class="absence-edit-button"
-                                            @onclick="() => StartEditingAbsence(absence)">
-                                        Edit
-                                    </button>
+                                    @if (editingBankInfoId != bank.Id)
+                                    {
+                                        <button type="button"
+                                                class="absence-edit-button"
+                                                @onclick="() => StartEditingBankInfo(bank)">
+                                            Edit
+                                        </button>
+                                    }
                                 }
 
-                                @if (isAdministrator)
+                                @if (editingBankInfoId == bank.Id)
                                 {
-                                    <button type="button"
-                                            class="absence-delete-button"
-                                            disabled="@isDeletingAbsence"
-                                            @onclick="() => ConfirmDeleteAbsence(absence.Id)">
-                                        Delete
-                                    </button>
+                                    <EditForm Model="bankInfoForm"
+                                              OnValidSubmit="SaveBankInfoAsync"
+                                              Context="bankEditContext">
+                                        <div class="absence-form">
+                                            <label>Account Holder Name</label>
+                                            <InputText @bind-Value="bankInfoForm.AccountHolderName" />
+                                            
+                                            <label>Account Holder Type</label>
+                                            <InputSelect @bind-Value="bankInfoForm.AccountHolderType">
+                                                <option value="@AccountHolderType.Individual">Individual</option>
+                                                <option value="@AccountHolderType.Company">Company</option>
+                                            </InputSelect>
 
-                                    @if (confirmingDeleteAbsenceId == absence.Id)
-                                    {
-                                        <div class="delete-confirmation">
-                                            <p>Are you sure you want to delete this absence entry?</p>
+                                            <label>Bank Name</label>
+                                            <InputText @bind-Value="bankInfoForm.BankName" />
 
-                                            <button type="button"
-                                                    class="absence-confirm-button"
-                                                    disabled="@isDeletingAbsence"
-                                                    @onclick="() => DeleteAbsenceAsync(absence.Id)">
-                                                @(isDeletingAbsence ? "Deleting..." : "Confirm Delete")
+                                            <label>Clearing Number</label>
+                                            <InputText @bind-Value="bankInfoForm.ClearingNumber" />
+
+                                            <label>Account Number</label>
+                                            <InputText @bind-Value="bankInfoForm.BankAccountNumber" />
+
+                                            <button type="submit"
+                                                    class="absence-edit-button"
+                                                    disabled="@isSavingBankInfo">
+                                                @(isSavingBankInfo ? "Saving..." : "Save Changes")
                                             </button>
 
                                             <button type="button"
                                                     class="absence-cancel-button"
-                                                    disabled="@isDeletingAbsence"
-                                                    @onclick="CancelDeleteAbsence">
+                                                    @onclick="CancelEditingBankInfo">
                                                 Cancel
                                             </button>
                                         </div>
-                                    }
-                                }
-
-                                @if (editingAbsenceId == absence.Id)
-                                {
-                                    <EditForm Model="editAbsenceForm"
-                                              OnValidSubmit="UpdateAbsenceAsync"
-                                              Context="absenceEditContext"
-                                              class="absence-form">
-
-                                        <h3>Edit Absence</h3>
-                                        
-                                        <div>
-                                            <label>Absence Type</label>
-                                            <InputSelect @bind-Value="editAbsenceForm.Type">
-                                                <option value="@AbsentismType.Sick">
-                                                    Sick Leave
-                                                </option>
-
-                                                <option value="@AbsentismType.CareOfSickChild">
-                                                    Care of Sick Child (VAB)
-                                                </option>
-
-                                                @if (isAdministrator)
-                                                {
-                                                    <option value="@AbsentismType.Vacation">
-                                                        Vacation
-                                                    </option>
-
-                                                    <option value="@AbsentismType.ParentalLeave">
-                                                        Parental Leave
-                                                    </option>
-                                                }
-                                            </InputSelect>
-                                        </div>
-
-                                        <div>
-                                            <label>Start Date and Time</label>
-                                            <InputDate @bind-Value="editAbsenceForm.StartTime"
-                                                       Type="InputDateType.DateTimeLocal" />
-                                        </div>
-
-                                        <div>
-                                            <label>End Date and Time</label>
-                                            <InputDate @bind-Value="editAbsenceForm.EndTime"
-                                                       Type="InputDateType.DateTimeLocal" />
-                                        </div>
-
-                                        <button type="submit"
-                                                class="absence-edit-button"
-                                                disabled="@isUpdatingAbsence">
-                                            @(isUpdatingAbsence ? "Saving..." : "Save Changes")
-                                        </button>
-
-                                        <button type="button"
-                                                class="absence-cancel-button"
-                                                disabled="@isUpdatingAbsence"
-                                                @onclick="CancelEditingAbsence">
-                                            Cancel
-                                        </button>
                                     </EditForm>
                                 }
                             </div>
                         }
                     }
 
-                    @if (!string.IsNullOrEmpty(editAbsenceMessage))
+                    @if ((isAdministrator || isMyProfilePage)
+                       && employee.BankInfos.Count == 0
+                       && !isCreatingBankInfo)
                     {
-                        <p class="success-message">@editAbsenceMessage</p>
-                    }
-
-                    @if (!string.IsNullOrEmpty(editAbsenceErrorMessage))
-                    {
-                        <p class="error-message">@editAbsenceErrorMessage</p>
-                    }
-
-                    <h3>Register Absence</h3>
-
-                    <EditForm Model="absenceForm"
-                              OnValidSubmit="RegisterAbsenceAsync"
-                              Context="editFormContext"
-                              class="absence-form">
-
-                        <div>
-                            <label>Absence Type</label>
-                            <InputSelect @bind-Value="absenceForm.Type">
-                                <option value="@AbsentismType.Sick">
-                                    Sick Leave
-                                </option>
-
-                                <option value="@AbsentismType.CareOfSickChild">
-                                    Care of Sick Child (VAB)
-                                </option>
-
-                                @if (isAdministrator)
-                                {
-                                    <option value="@AbsentismType.Vacation">
-                                        Vacation
-                                    </option>
-
-                                    <option value="@AbsentismType.ParentalLeave">
-                                        Parental Leave
-                                    </option>
-                                }
-                            </InputSelect>
-                        </div>
-
-                        <div>
-                            <label>Start Date and Time</label>
-                            <InputDate @bind-Value="absenceForm.StartTime"
-                                       Type="InputDateType.DateTimeLocal" />
-                        </div>
-
-                        <div>
-                            <label>End Date and Time</label>
-                            <InputDate @bind-Value="absenceForm.EndTime"
-                                       Type="InputDateType.DateTimeLocal" />
-                        </div>
-
-                        @if (!string.IsNullOrEmpty(absenceMessage))
-                        {
-                            <p class="success-message">@absenceMessage</p>
-                        }
-
-                        @if (!string.IsNullOrEmpty(absenceErrorMessage))
-                        {
-                            <p class="error-message">@absenceErrorMessage</p>
-                        }
-
-                        <button type="submit"
+                        <button type="button"
                                 class="absence-edit-button"
-                                disabled="@isSubmittingAbsence">
-                            @(isSubmittingAbsence ? "Registering..." : "Register Absence")
+                                @onclick="StartCreatingBankInfo">
+                            Add Banking Details
                         </button>
-                    </EditForm>
-                </section>
-
-                
-
-                
-                <section>
-                    <h2>Time Reports</h2>
-
-                    @if (employee.TimeReports.Count == 0)
-                    {
-                        <p>No time reports registered.</p>
                     }
-                    else
+                    
+                    @if (isCreatingBankInfo)
                     {
-                        @foreach (var report in employee.TimeReports)
-                        {
-                            <div>
-                                <p><strong>Order Number:</strong> @report.BookingId</p>
-                                <p><strong>Start:</strong> @report.StartTime.ToString("g")</p>
-                                <p><strong>End:</strong> @report.EndTime.ToString("g")</p>
-                                <p><strong>Break (minutes):</strong> @report.BreakMinutes</p>
-                                <p><strong>Description:</strong> @report.Description</p>
+                        <EditForm Model="bankInfoForm"
+                                  OnValidSubmit="CreateBankInfoAsync"
+                                  Context="bankCreateContext">
+                            <div class="absence-form">
+                                <h3>New Banking Details</h3>
+
+                                <label>Account Holder Name</label>
+                                <InputText @bind-Value="bankInfoForm.AccountHolderName" />
+
+                                <label>Account Holder Type</label>
+                                <InputSelect @bind-Value="bankInfoForm.AccountHolderType">
+                                    <option value="@AccountHolderType.Individual">Individual</option>
+                                    <option value="@AccountHolderType.Company">Company</option>
+                                </InputSelect>
+
+                                <label>Bank Name</label>
+                                <InputText @bind-Value="bankInfoForm.BankName" />
+
+                                <label>Clearing Number</label>
+                                <InputText @bind-Value="bankInfoForm.ClearingNumber" />
+
+                                <label>Account Number</label>
+                                <InputText @bind-Value="bankInfoForm.BankAccountNumber" />
+
+                                <button type="submit"
+                                        class="absence-edit-button"
+                                        disabled="@isSubmittingBankInfo">
+                                    @(isSubmittingBankInfo ? "Saving..." : "Create Banking Details")
+                                </button>
+
+                                <button type="button"
+                                        class="absence-cancel-button"
+                                        @onclick="CancelCreatingBankInfo">
+                                    Cancel
+                                </button>
                             </div>
-                        }
+                        </EditForm>
                     }
                 </section>
 
-                <section>
-                    <h2>Team and Associated Orders</h2>
 
-                    @if (employee.TeamAssignments.Count == 0)
-                    {
-                        <p>This employee is not currently assigned to any registered team.</p>
-                    }
-                    else
-                    {
-                        @foreach (var assignment in employee.TeamAssignments)
+
+
+                    <section>
+                        <h2>Absence History</h2>
+
+                        @if (employee.Absentisms.Count == 0)
                         {
-                            <div>
-                                <p><strong>Team:</strong> @assignment.TeamId</p>
-                                <p><strong>Order:</strong> @assignment.BookingId</p>
-                                <p><strong>Customer:</strong> @assignment.CustomerName</p>
-                                <p><strong>Order Status:</strong> @assignment.BookingStatus</p>
-                                <p><strong>Order Start:</strong> @assignment.BookingStartTime.ToString("g")</p>
-                                <p><strong>Order End:</strong> @assignment.BookingEndTime.ToString("g")</p>
-                            </div>
+                            <p>No absence information registered.</p>
                         }
+                        else
+                        {
+                            @foreach (var absence in employee.Absentisms.OrderByDescending(a => a.StartTime))
+                            {
+                                <div>
+                                    <p><strong>Type:</strong> @absence.Type</p>
+                                    <p><strong>From:</strong> @absence.StartTime.ToString("g")</p>
+                                    <p><strong>To:</strong> @absence.EndTime.ToString("g")</p>
+
+                                    @if (isAdministrator ||
+                                                                                                    (absence.StartTime > DateTime.Now &&
+                                                                                                    (absence.Type == AbsentismType.Sick ||
+                                                                                                     absence.Type == AbsentismType.CareOfSickChild)))
+                                    {
+                                        <button type="button"
+                                        class="absence-edit-button"
+                                        @onclick="() => StartEditingAbsence(absence)">
+                                            Edit
+                                        </button>
+                                    }
+
+                                    @if (isAdministrator)
+                                    {
+                                        <button type="button"
+                                        class="absence-delete-button"
+                                        disabled="@isDeletingAbsence"
+                                        @onclick="() => ConfirmDeleteAbsence(absence.Id)">
+                                            Delete
+                                        </button>
+
+                                        @if (confirmingDeleteAbsenceId == absence.Id)
+                                        {
+                                            <div class="delete-confirmation">
+                                                <p>Are you sure you want to delete this absence entry?</p>
+
+                                                <button type="button"
+                                                class="absence-confirm-button"
+                                                disabled="@isDeletingAbsence"
+                                                @onclick="() => DeleteAbsenceAsync(absence.Id)">
+                                                    @(isDeletingAbsence ? "Deleting..." : "Confirm Delete")
+                                                </button>
+
+                                                <button type="button"
+                                                class="absence-cancel-button"
+                                                disabled="@isDeletingAbsence"
+                                                @onclick="CancelDeleteAbsence">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        }
+                                    }
+
+                                    @if (editingAbsenceId == absence.Id)
+                                    {
+                                        <EditForm Model="editAbsenceForm"
+                                        OnValidSubmit="UpdateAbsenceAsync"
+                                        Context="absenceEditContext"
+                                        class="absence-form">
+
+                                            <h3>Edit Absence</h3>
+
+                                            <div>
+                                                <label>Absence Type</label>
+                                                <InputSelect @bind-Value="editAbsenceForm.Type">
+                                                    <option value="@AbsentismType.Sick">
+                                                        Sick Leave
+                                                    </option>
+
+                                                    <option value="@AbsentismType.CareOfSickChild">
+                                                        Care of Sick Child (VAB)
+                                                    </option>
+
+                                                    @if (isAdministrator)
+                                                    {
+                                                        <option value="@AbsentismType.Vacation">
+                                                            Vacation
+                                                        </option>
+
+                                                        <option value="@AbsentismType.ParentalLeave">
+                                                            Parental Leave
+                                                        </option>
+                                                    }
+                                                </InputSelect>
+                                            </div>
+
+                                            <div>
+                                                <label>Start Date and Time</label>
+                                                <InputDate @bind-Value="editAbsenceForm.StartTime"
+                                                Type="InputDateType.DateTimeLocal" />
+                                            </div>
+
+                                            <div>
+                                                <label>End Date and Time</label>
+                                                <InputDate @bind-Value="editAbsenceForm.EndTime"
+                                                Type="InputDateType.DateTimeLocal" />
+                                            </div>
+
+                                            <button type="submit"
+                                            class="absence-edit-button"
+                                            disabled="@isUpdatingAbsence">
+                                                @(isUpdatingAbsence ? "Saving..." : "Save Changes")
+                                            </button>
+
+                                            <button type="button"
+                                            class="absence-cancel-button"
+                                            disabled="@isUpdatingAbsence"
+                                            @onclick="CancelEditingAbsence">
+                                                Cancel
+                                            </button>
+                                        </EditForm>
+                                    }
+                                </div>
+                            }
+                        }
+
+                        @if (!string.IsNullOrEmpty(editAbsenceMessage))
+                        {
+                            <p class="success-message">@editAbsenceMessage</p>
+                        }
+
+                        @if (!string.IsNullOrEmpty(editAbsenceErrorMessage))
+                        {
+                            <p class="error-message">@editAbsenceErrorMessage</p>
+                        }
+
+                        <h3>Register Absence</h3>
+
+                        <EditForm Model="absenceForm"
+                        OnValidSubmit="RegisterAbsenceAsync"
+                        Context="editFormContext"
+                        class="absence-form">
+
+                            <div>
+                                <label>Absence Type</label>
+                                <InputSelect @bind-Value="absenceForm.Type">
+                                    <option value="@AbsentismType.Sick">
+                                        Sick Leave
+                                    </option>
+
+                                    <option value="@AbsentismType.CareOfSickChild">
+                                        Care of Sick Child (VAB)
+                                    </option>
+
+                                    @if (isAdministrator)
+                                    {
+                                        <option value="@AbsentismType.Vacation">
+                                            Vacation
+                                        </option>
+
+                                        <option value="@AbsentismType.ParentalLeave">
+                                            Parental Leave
+                                        </option>
+                                    }
+                                </InputSelect>
+                            </div>
+
+                            <div>
+                                <label>Start Date and Time</label>
+                                <InputDate @bind-Value="absenceForm.StartTime"
+                                Type="InputDateType.DateTimeLocal" />
+                            </div>
+
+                            <div>
+                                <label>End Date and Time</label>
+                                <InputDate @bind-Value="absenceForm.EndTime"
+                                Type="InputDateType.DateTimeLocal" />
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(absenceMessage))
+                            {
+                                <p class="success-message">@absenceMessage</p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(absenceErrorMessage))
+                            {
+                                <p class="error-message">@absenceErrorMessage</p>
+                            }
+
+                            <button type="submit"
+                            class="absence-edit-button"
+                            disabled="@isSubmittingAbsence">
+                                @(isSubmittingAbsence ? "Registering..." : "Register Absence")
+                            </button>
+                        </EditForm>
+                    </section>
+
+
+
+
+                    <section>
+                        <h2>Time Reports</h2>
+
+                        @if (employee.TimeReports.Count == 0)
+                        {
+                            <p>No time reports registered.</p>
+                        }
+                        else
+                        {
+                            @foreach (var report in employee.TimeReports)
+                            {
+                                <div>
+                                    <p><strong>Order Number:</strong> @report.BookingId</p>
+                                    <p><strong>Start:</strong> @report.StartTime.ToString("g")</p>
+                                    <p><strong>End:</strong> @report.EndTime.ToString("g")</p>
+                                    <p><strong>Break (minutes):</strong> @report.BreakMinutes</p>
+                                    <p><strong>Description:</strong> @report.Description</p>
+                                </div>
+                            }
+                        }
+                    </section>
+
+                    <section>
+                        <h2>Team and Associated Orders</h2>
+
+                        @if (employee.TeamAssignments.Count == 0)
+                        {
+                            <p>This employee is not currently assigned to any registered team.</p>
+                        }
+                        else
+                        {
+                            @foreach (var assignment in employee.TeamAssignments)
+                            {
+                                <div>
+                                    <p><strong>Team:</strong> @assignment.TeamId</p>
+                                    <p><strong>Order:</strong> @assignment.BookingId</p>
+                                    <p><strong>Customer:</strong> @assignment.CustomerName</p>
+                                    <p><strong>Order Status:</strong> @assignment.BookingStatus</p>
+                                    <p><strong>Order Start:</strong> @assignment.BookingStartTime.ToString("g")</p>
+                                    <p><strong>Order End:</strong> @assignment.BookingEndTime.ToString("g")</p>
+                                </div>
+                            }
+                        }
+                    </section>
                     }
-                </section>
-            }
 
-        </div>
-    </Authorized>
+                    </div>
+                </Authorized>
 
-    <NotAuthorized>
-        <p>You must be logged in to view employee details.</p>
-    </NotAuthorized>
-</AuthorizeView>
+                <NotAuthorized>
+                    <p>You must be logged in to view employee details.</p>
+                </NotAuthorized>
+                </AuthorizeView>
 
-@code {
-    [Parameter]
+                @code {
+                [Parameter]
     public int Id { get; set; }
 
     private EmployeeDetailsDto? employee;
@@ -415,59 +640,102 @@
     private bool isLoading = true;
     private string? errorMessage;
     private int? confirmingDeleteAbsenceId;
+    // Contact information editing state.
+            private bool isMyProfilePage;
+    private int? editingContactInfoId;
+    private bool isSavingContactInfo;
+    private bool isCreatingContactInfo;
+    private bool isSubmittingContactInfo;
+    private string? contactInfoMessage;
+    private string? contactInfoErrorMessage;
+
+    private ContactInfoFormModel contactInfoForm = new();
+
+    private class ContactInfoFormModel
+    {
+                public string Address { get; set; } = string.Empty;
+                public string Telephone { get; set; } = string.Empty;
+                public string Email { get; set; } = string.Empty;
+    }
+    // Banking details editing state.
+    private int? editingBankInfoId;
+    private bool isSavingBankInfo;
+    private bool isCreatingBankInfo;
+    private bool isSubmittingBankInfo;
+    private string? bankInfoMessage;
+    private string? bankInfoErrorMessage;
     
+    private BankInfoFormModel bankInfoForm = new();
+
+    private class BankInfoFormModel
+    {
+        public string AccountHolderName { get; set; } = string.Empty;
+
+        public AccountHolderType AccountHolderType { get; set; }
+            = AccountHolderType.Individual;
+
+        public string BankName { get; set; } = string.Empty;
+
+        public string BankAccountNumber { get; set; } = string.Empty;
+
+        public string ClearingNumber { get; set; } = string.Empty;
+    }
     // Fetches detailed information about the selected employee.
     protected override async Task OnParametersSetAsync()
     {
-        isLoading = true;
-        errorMessage = null;
-        employee = null;
-        
-        try
-        {
-            var authState = await AuthenticationStateProvider
-                .GetAuthenticationStateAsync();
+                isMyProfilePage = NavigationManager.ToBaseRelativePath(
+    NavigationManager.Uri).Equals(
+                "my-profile",
+                StringComparison.OrdinalIgnoreCase);
+                isLoading = true;
+                errorMessage = null;
+                employee = null;
 
-            isAdministrator = authState.User.IsInRole("Administrator");
+                try
+                {
+                    var authState = await AuthenticationStateProvider
+                        .GetAuthenticationStateAsync();
 
-            // Fetches the selected employee or the currently logged-in employee.
-            employee = Id > 0
-                ? await EmployeeApiService.GetDetailsAsync(Id)
-                : await EmployeeApiService.GetMyDetailsAsync();
+                    isAdministrator = authState.User.IsInRole("Administrator");
 
-            if (employee == null)
-            {
-                errorMessage = "The employee could not be found.";
-            }
-        }
-        catch (HttpRequestException ex)
-            when (ex.StatusCode == HttpStatusCode.Forbidden)
-        {
-            errorMessage = "You do not have permission to view these employee details.";
-        }
-        catch (HttpRequestException ex)
-            when (ex.StatusCode == HttpStatusCode.NotFound)
-        {
-            errorMessage = "The employee could not be found.";
-        }
-        catch (HttpRequestException)
-        {
-            errorMessage = "Could not reach the server. Please check the API connection.";
-        }
-        catch (Exception)
-        {
-            errorMessage = "An unexpected error occurred while fetching employee details.";
-        }
-        finally
-        {
-            isLoading = false;
-        }
+                    // Fetches the selected employee or the currently logged-in employee.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    if (employee == null)
+                    {
+                        errorMessage = "The employee could not be found.";
+                    }
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    errorMessage = "You do not have permission to view these employee details.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    errorMessage = "The employee could not be found.";
+                }
+                catch (HttpRequestException)
+                {
+                    errorMessage = "Could not reach the server. Please check the API connection.";
+                }
+                catch (Exception)
+                {
+                    errorMessage = "An unexpected error occurred while fetching employee details.";
+                }
+                finally
+                {
+                    isLoading = false;
+                }
     }
     private bool isAdministrator;
     private bool isSubmittingAbsence;
     private string? absenceMessage;
     private string? absenceErrorMessage;
-    
+
     private AbsenceFormModel absenceForm = new();
     private int? editingAbsenceId;
     private bool isUpdatingAbsence;
@@ -479,196 +747,572 @@
     private AbsenceFormModel editAbsenceForm = new();
     private class AbsenceFormModel
     {
-        public DateTime StartTime { get; set; } = DateTime.Now;
+                public DateTime StartTime { get; set; } = DateTime.Now;
 
-        public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
+                public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
 
-        public AbsentismType Type { get; set; } = AbsentismType.Sick;
+                public AbsentismType Type { get; set; } = AbsentismType.Sick;
     }
     private async Task RegisterAbsenceAsync()
     {
-        isSubmittingAbsence = true;
-        absenceMessage = null;
-        absenceErrorMessage = null;
-        
-        try
-        {
-            var request = new CreateAbsentismDto
+                isSubmittingAbsence = true;
+                absenceMessage = null;
+                absenceErrorMessage = null;
+
+                try
+                {
+                    var request = new CreateAbsentismDto
             {
                 StartTime = absenceForm.StartTime,
                 EndTime = absenceForm.EndTime,
                 Type = absenceForm.Type
             };
 
-            if (isAdministrator)
-            {
-                await AbsentismApiService.CreateForEmployeeAsync(employee.Id, request);
-            }
-            else
-            {
-                await AbsentismApiService.CreateAsync(request);
-            }
+                    if (isAdministrator)
+                    {
+                        await AbsentismApiService.CreateForEmployeeAsync(employee.Id, request);
+                    }
+                    else
+                    {
+                        await AbsentismApiService.CreateAsync(request);
+                    }
 
-            // Refresh employee information after successful registration.
-            employee = Id > 0
+                    // Refresh employee information after successful registration.
+                    employee = Id > 0
     ? await EmployeeApiService.GetDetailsAsync(Id)
     : await EmployeeApiService.GetMyDetailsAsync();
 
-            absenceMessage = "Absence registered successfully.";
+                    absenceMessage = "Absence registered successfully.";
 
-            absenceForm = new AbsenceFormModel
+                    absenceForm = new AbsenceFormModel
             {
                 StartTime = DateTime.Now,
                 EndTime = DateTime.Now.AddHours(1),
                 Type = AbsentismType.Sick
             };
-        }
-        catch (HttpRequestException ex)
-        {
-            absenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
-                ? "Could not register absence."
-                : ex.Message;
-        }
-        catch (Exception)
-        {
-            absenceErrorMessage = "An unexpected error occurred.";
-        }
-        finally
-        {
-            isSubmittingAbsence = false;
-        }
+                }
+                catch (HttpRequestException ex)
+                {
+                    absenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                        ? "Could not register absence."
+                        : ex.Message;
+                }
+                catch (Exception)
+                {
+                    absenceErrorMessage = "An unexpected error occurred.";
+                }
+                finally
+                {
+                    isSubmittingAbsence = false;
+                }
     }
-    
+
     // Starts editing an existing absence entry.
     private void StartEditingAbsence(
     NPJL.Application.DTOs.Employees.AbsentismDto absence)
     {
-        editingAbsenceId = absence.Id;
+                editingAbsenceId = absence.Id;
 
-        editAbsenceForm = new AbsenceFormModel
+                editAbsenceForm = new AbsenceFormModel
         {
             StartTime = absence.StartTime,
             EndTime = absence.EndTime,
             Type = absence.Type
         };
 
-        editAbsenceMessage = null;
-        editAbsenceErrorMessage = null;
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
     }
 
     // Cancels the current absence editing operation.
     private void CancelEditingAbsence()
     {
-        editingAbsenceId = null;
-        editAbsenceForm = new AbsenceFormModel();
+                editingAbsenceId = null;
+                editAbsenceForm = new AbsenceFormModel();
 
-        editAbsenceMessage = null;
-        editAbsenceErrorMessage = null;
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
     }
 
     // Updates an existing absence entry.
     private async Task UpdateAbsenceAsync()
     {
-        if (editingAbsenceId == null)
-        {
-            return;
-        }
+                if (editingAbsenceId == null)
+                {
+                    return;
+                }
 
-        isUpdatingAbsence = true;
-        editAbsenceMessage = null;
-        editAbsenceErrorMessage = null;
+                isUpdatingAbsence = true;
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
 
-        try
-        {
-            var request = new UpdateAbsentismDto
+                try
+                {
+                    var request = new UpdateAbsentismDto
             {
                 StartTime = editAbsenceForm.StartTime,
                 EndTime = editAbsenceForm.EndTime,
                 Type = editAbsenceForm.Type
             };
 
-            await AbsentismApiService.UpdateAsync(
-                editingAbsenceId.Value,
-                request);
+                    await AbsentismApiService.UpdateAsync(
+                        editingAbsenceId.Value,
+                        request);
 
-            // Refresh employee information after successful update.
-            employee = Id > 0
-                ? await EmployeeApiService.GetDetailsAsync(Id)
-                : await EmployeeApiService.GetMyDetailsAsync();
+                    // Refresh employee information after successful update.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
 
-            editingAbsenceId = null;
+                    editingAbsenceId = null;
 
-            editAbsenceMessage = "Absence updated successfully.";
-        }
-        catch (HttpRequestException ex)
-        {
-            editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
-                ? "Could not update absence."
-                : ex.Message;
-        }
-        catch (Exception)
-        {
-            editAbsenceErrorMessage = "An unexpected error occurred.";
-        }
-        finally
-        {
-            isUpdatingAbsence = false;
-        }
+                    editAbsenceMessage = "Absence updated successfully.";
+                }
+                catch (HttpRequestException ex)
+                {
+                    editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                        ? "Could not update absence."
+                        : ex.Message;
+                }
+                catch (Exception)
+                {
+                    editAbsenceErrorMessage = "An unexpected error occurred.";
+                }
+                finally
+                {
+                    isUpdatingAbsence = false;
+                }
     }
 
     // Deletes an existing absence entry.
     private async Task DeleteAbsenceAsync(int absenceId)
     {
-        if (!isAdministrator)
-        {
-            return;
-        }
+                if (!isAdministrator)
+                {
+                    return;
+                }
 
-        isDeletingAbsence = true;
-        editAbsenceMessage = null;
-        editAbsenceErrorMessage = null;
+                isDeletingAbsence = true;
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
 
-        try
-        {
-            await AbsentismApiService.DeleteAsync(absenceId);
+                try
+                {
+                    await AbsentismApiService.DeleteAsync(absenceId);
 
-            // Refresh employee information after successful deletion.
-            employee = Id > 0
-                ? await EmployeeApiService.GetDetailsAsync(Id)
-                : await EmployeeApiService.GetMyDetailsAsync();
+                    // Refresh employee information after successful deletion.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
 
-            if (editingAbsenceId == absenceId)
-            {
-                editingAbsenceId = null;
-            }
-            confirmingDeleteAbsenceId = null;
-            editAbsenceMessage = "Absence deleted successfully.";
-        }
-        catch (HttpRequestException ex)
-        {
-            editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
-                ? "Could not delete absence."
-                : ex.Message;
-        }
-        catch (Exception)
-        {
-            editAbsenceErrorMessage = "An unexpected error occurred.";
-        }
-        finally
-        {
-            isDeletingAbsence = false;
-        }
+                    if (editingAbsenceId == absenceId)
+                    {
+                        editingAbsenceId = null;
+                    }
+                    confirmingDeleteAbsenceId = null;
+                    editAbsenceMessage = "Absence deleted successfully.";
+                }
+                catch (HttpRequestException ex)
+                {
+                    editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                        ? "Could not delete absence."
+                        : ex.Message;
+                }
+                catch (Exception)
+                {
+                    editAbsenceErrorMessage = "An unexpected error occurred.";
+                }
+                finally
+                {
+                    isDeletingAbsence = false;
+                }
     }
-    
+
     // Requests confirmation before deleting an absence entry.
     private void ConfirmDeleteAbsence(int absenceId)
     {
-        confirmingDeleteAbsenceId = absenceId;
+                confirmingDeleteAbsenceId = absenceId;
     }
 
     // Cancels the pending deletion.
     private void CancelDeleteAbsence()
     {
-        confirmingDeleteAbsenceId = null;
+                confirmingDeleteAbsenceId = null;
+    }
+    // Starts editing an existing contact information entry.
+    private void StartEditingContactInfo(ContactInfoDto contact)
+    {
+                editingContactInfoId = contact.Id;
+
+                contactInfoForm = new ContactInfoFormModel
+        {
+            Address = contact.Address,
+            Telephone = contact.Telephone,
+            Email = contact.Email
+        };
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Cancels the current contact information editing operation.
+    private void CancelEditingContactInfo()
+    {
+                editingContactInfoId = null;
+                contactInfoForm = new ContactInfoFormModel();
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Saves changes to existing contact information.
+    private async Task SaveContactInfoAsync()
+    {
+                if (editingContactInfoId == null || employee == null)
+                {
+                    return;
+                }
+
+                isSavingContactInfo = true;
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+
+                try
+                {
+                    var request = new UpdateContactInfoDto
+            {
+                Address = contactInfoForm.Address,
+                Telephone = contactInfoForm.Telephone,
+                Email = contactInfoForm.Email
+            };
+
+                    var updated = await ContactInfoApiService.UpdateAsync(
+                        employee.Id,
+                        editingContactInfoId.Value,
+                        request);
+
+                    if (!updated)
+                    {
+                        contactInfoErrorMessage =
+                            "The contact information could not be found.";
+                        return;
+                    }
+
+                    // Refresh employee information after successful update.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    editingContactInfoId = null;
+                    contactInfoMessage = "Contact information updated successfully.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    contactInfoErrorMessage =
+                        "You do not have permission to update this contact information.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    contactInfoErrorMessage =
+                        "The contact information could not be found.";
+                }
+                catch (HttpRequestException)
+                {
+                    contactInfoErrorMessage =
+                        "Could not reach the server. Please check the API connection.";
+                }
+                catch (Exception)
+                {
+                    contactInfoErrorMessage =
+                        "An unexpected error occurred while updating contact information.";
+                }
+                finally
+                {
+                    isSavingContactInfo = false;
+                }
+    }
+    // Starts creating new contact information.
+    private void StartCreatingContactInfo()
+    {
+                isCreatingContactInfo = true;
+                editingContactInfoId = null;
+                contactInfoForm = new ContactInfoFormModel();
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Cancels creating new contact information.
+    private void CancelCreatingContactInfo()
+    {
+                isCreatingContactInfo = false;
+                contactInfoForm = new ContactInfoFormModel();
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Creates new contact information for the employee.
+    private async Task CreateContactInfoAsync()
+    {
+                if (employee == null)
+                {
+                    return;
+                }
+
+                if (!isAdministrator && !isMyProfilePage)
+                {
+                    return;
+                }
+
+                isSubmittingContactInfo = true;
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+
+                try
+                {
+                    var request = new CreateContactInfoDto
+            {
+                Address = contactInfoForm.Address,
+                Telephone = contactInfoForm.Telephone,
+                Email = contactInfoForm.Email
+            };
+
+                    await ContactInfoApiService.CreateAsync(employee.Id, request);
+
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    isCreatingContactInfo = false;
+                    contactInfoForm = new ContactInfoFormModel();
+
+                    contactInfoMessage = "Contact information created successfully.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    contactInfoErrorMessage =
+                        "You do not have permission to create contact information.";
+                }
+                catch (HttpRequestException)
+                {
+                    contactInfoErrorMessage =
+                        "Could not create contact information. Please check the API connection.";
+                }
+                catch (Exception)
+                {
+                    contactInfoErrorMessage =
+                        "An unexpected error occurred while creating contact information.";
+                }
+                finally
+                {
+                    isSubmittingContactInfo = false;
+                }
+                }
+                // Starts editing an existing banking details entry.
+private void StartEditingBankInfo(BankInfoDto bank)
+{
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    editingBankInfoId = bank.Id;
+
+    Enum.TryParse<AccountHolderType>(
+        bank.AccountHolderType,
+        out var accountHolderType);
+
+    bankInfoForm = new BankInfoFormModel
+    {
+        AccountHolderName = bank.AccountHolderName,
+        AccountHolderType = accountHolderType,
+        BankName = bank.BankName,
+        BankAccountNumber = bank.BankAccountNumber,
+        ClearingNumber = bank.ClearingNumber
+    };
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+
+// Cancels the current banking details editing operation.
+private void CancelEditingBankInfo()
+{
+    editingBankInfoId = null;
+    bankInfoForm = new BankInfoFormModel();
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+
+// Saves changes to existing banking details.
+private async Task SaveBankInfoAsync()
+{
+    if (editingBankInfoId == null || employee == null)
+    {
+        return;
+    }
+
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    isSavingBankInfo = true;
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+
+    try
+    {
+        var request = new UpdateBankInfoDto
+        {
+            AccountHolderName = bankInfoForm.AccountHolderName,
+            AccountHolderType = bankInfoForm.AccountHolderType,
+            BankName = bankInfoForm.BankName,
+            BankAccountNumber = bankInfoForm.BankAccountNumber,
+            ClearingNumber = bankInfoForm.ClearingNumber
+        };
+
+        var updated = await BankInfoApiService.UpdateAsync(
+            employee.Id,
+            editingBankInfoId.Value,
+            request);
+
+        if (!updated)
+        {
+            bankInfoErrorMessage =
+                "The banking details could not be found.";
+            return;
+        }
+
+        employee = Id > 0
+            ? await EmployeeApiService.GetDetailsAsync(Id)
+            : await EmployeeApiService.GetMyDetailsAsync();
+
+        editingBankInfoId = null;
+        bankInfoMessage = "Banking details updated successfully.";
+    }
+    catch (HttpRequestException ex)
+        when (ex.StatusCode == HttpStatusCode.Forbidden)
+    {
+        bankInfoErrorMessage =
+            "You do not have permission to update these banking details.";
+    }
+    catch (HttpRequestException ex)
+        when (ex.StatusCode == HttpStatusCode.NotFound)
+    {
+        bankInfoErrorMessage =
+            "The banking details could not be found.";
+    }
+    catch (HttpRequestException)
+    {
+        bankInfoErrorMessage =
+            "Could not reach the server. Please check the API connection.";
+    }
+    catch (Exception)
+    {
+        bankInfoErrorMessage =
+            "An unexpected error occurred while updating banking details.";
+    }
+    finally
+    {
+        isSavingBankInfo = false;
     }
 }
+
+// Starts creating new banking details.
+private void StartCreatingBankInfo()
+{
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    isCreatingBankInfo = true;
+    editingBankInfoId = null;
+    bankInfoForm = new BankInfoFormModel();
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+
+// Cancels creating new banking details.
+private void CancelCreatingBankInfo()
+{
+    isCreatingBankInfo = false;
+    bankInfoForm = new BankInfoFormModel();
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+
+// Creates new banking details for the employee.
+private async Task CreateBankInfoAsync()
+{
+    if (employee == null)
+    {
+        return;
+    }
+
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    isSubmittingBankInfo = true;
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+
+    try
+    {
+        var request = new CreateBankInfoDto
+        {
+            AccountHolderName = bankInfoForm.AccountHolderName,
+            AccountHolderType = bankInfoForm.AccountHolderType,
+            BankName = bankInfoForm.BankName,
+            BankAccountNumber = bankInfoForm.BankAccountNumber,
+            ClearingNumber = bankInfoForm.ClearingNumber
+        };
+
+        await BankInfoApiService.CreateAsync(employee.Id, request);
+
+        employee = Id > 0
+            ? await EmployeeApiService.GetDetailsAsync(Id)
+            : await EmployeeApiService.GetMyDetailsAsync();
+
+        isCreatingBankInfo = false;
+        bankInfoForm = new BankInfoFormModel();
+
+        bankInfoMessage = "Banking details created successfully.";
+    }
+    catch (HttpRequestException ex)
+        when (ex.StatusCode == HttpStatusCode.Forbidden)
+    {
+        bankInfoErrorMessage =
+            "You do not have permission to create banking details.";
+    }
+    catch (HttpRequestException)
+    {
+        bankInfoErrorMessage =
+            "Could not create banking details. Please check the API connection.";
+    }
+    catch (Exception)
+    {
+        bankInfoErrorMessage =
+            "An unexpected error occurred while creating banking details.";
+    }
+    finally
+    {
+        isSubmittingBankInfo = false;
+    }
+}
+                }
+
+          
+       
+            
+

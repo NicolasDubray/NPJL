@@ -43,12 +43,16 @@ namespace NPJL.Infrastructure
             services.AddScoped<ISalaryRepository, SalaryRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<IAbsentismRepository, AbsentismRepository>();
+            services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
+            services.AddScoped<IBankInfoRepository, BankInfoRepository>();
 
             // Registrerar services
             services.AddScoped<NPJL.Application.Services.CustomerService>();
             services.AddScoped<SalaryService>();
             services.AddScoped<NPJL.Application.Services.EmployeeService>();
+            services.AddScoped<NPJL.Application.Services.ContactInfoService>();
             services.AddScoped<NPJL.Application.Services.AbsentismService>();
+            services.AddScoped<NPJL.Application.Services.BankInfoService>();
 
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();

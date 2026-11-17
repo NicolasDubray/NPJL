@@ -1,38 +1,77 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿
+using Microsoft.EntityFrameworkCore;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
+using NPJL.Infrastructure.Persistence;
 
 namespace NPJL.Infrastructure.Repositories
 {
-    public class BankInfoRepository
+    public class BankInfoRepository : IBankInfoRepository
     {
-        public async Task GetTaskAsync()
+        private readonly ApplicationDbContext _context;
+
+        public BankInfoRepository(ApplicationDbContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
         }
-        public async Task GetAllAsync()
+
+        // Hämtar samtliga bankuppgifter.
+        public async Task<IReadOnlyList<BankInfo>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.BankInfos
+                .AsNoTracking()
+                .ToListAsync();
         }
-        public async Task GetByIdAsync()
+
+        // Hämtar bankuppgifter via ID.
+        public async Task<BankInfo?> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _context.BankInfos
+                .FirstOrDefaultAsync(b => b.Id == id);
         }
-        public async Task GetByCustomerIdAsync()
+
+        // Hämtar samtliga bankuppgifter för en anställd.
+        public async Task<IReadOnlyList<BankInfo>> GetByEmployeeIdAsync(
+            int employeeId)
         {
-            throw new NotImplementedException();
+            return await _context.BankInfos
+                .AsNoTracking()
+                .Where(b => b.EmployeeId == employeeId)
+                .ToListAsync();
         }
-        public async Task CreateAsync()
+
+        // Skapar nya bankuppgifter.
+        public async Task<BankInfo> CreateAsync(BankInfo entity)
         {
-            throw new NotImplementedException();
+            await _context.BankInfos.AddAsync(entity);
+
+            return entity;
         }
-        public async Task UpdateAsync()
+
+        // Uppdaterar befintliga bankuppgifter.
+        public Task UpdateAsync(BankInfo entity)
         {
-            throw new NotImplementedException();
+            _context.BankInfos.Update(entity);
+
+            return Task.CompletedTask;
         }
-        public async Task DeleteAsync()
+
+        // Tar bort bankuppgifter via ID.
+        public async Task DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var bankInfo = await _context.BankInfos
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (bankInfo != null)
+            {
+                _context.BankInfos.Remove(bankInfo);
+            }
+        }
+
+        // Sparar genomförda ändringar i databasen.
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }
