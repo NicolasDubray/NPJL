@@ -24,6 +24,7 @@ builder.Services.AddScoped<EmployeeApiService>();
 builder.Services.AddScoped<ContactInfoApiService>();
 builder.Services.AddScoped<AbsentismApiService>();
 builder.Services.AddScoped<BankInfoApiService>();
+builder.Services.AddScoped<TimeReportApiService>();
 
 // Registrerar gemensamma skatteinställningar.
 builder.Services.Configure<TaxSettings>(
@@ -46,6 +47,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 

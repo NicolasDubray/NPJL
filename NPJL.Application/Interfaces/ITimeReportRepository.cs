@@ -1,8 +1,8 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NPJL.Domain.Entities;
-
 
 namespace NPJL.Application.Interfaces
 {
@@ -21,5 +21,8 @@ namespace NPJL.Application.Interfaces
             int employeeId,
             DateTime startDate,
             DateTime endDate);
+
+        // Sparar ändringar i databasen.
+        Task SaveChangesAsync();
     }
 }

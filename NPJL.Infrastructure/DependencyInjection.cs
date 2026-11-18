@@ -45,6 +45,7 @@ namespace NPJL.Infrastructure
             services.AddScoped<IAbsentismRepository, AbsentismRepository>();
             services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
             services.AddScoped<IBankInfoRepository, BankInfoRepository>();
+            services.AddScoped<ITimeReportRepository, TimeReportRepository>();
 
             // Registrerar services
             services.AddScoped<NPJL.Application.Services.CustomerService>();
@@ -53,6 +54,8 @@ namespace NPJL.Infrastructure
             services.AddScoped<NPJL.Application.Services.ContactInfoService>();
             services.AddScoped<NPJL.Application.Services.AbsentismService>();
             services.AddScoped<NPJL.Application.Services.BankInfoService>();
+            services.AddScoped<ITimeReportService, NPJL.Application.Services.TimeReportService>();
+
 
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();

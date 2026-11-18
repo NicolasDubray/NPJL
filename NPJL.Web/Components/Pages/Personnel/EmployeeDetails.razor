@@ -18,6 +18,7 @@
 @inject ContactInfoApiService ContactInfoApiService
 @inject NavigationManager NavigationManager
 @inject BankInfoApiService BankInfoApiService
+@inject TimeReportApiService TimeReportApiService
 
 <PageTitle>Employee Details</PageTitle>
 
@@ -560,7 +561,7 @@
                             {
                                 <p class="success-message">@absenceMessage</p>
                             }
-
+                        
                             @if (!string.IsNullOrEmpty(absenceErrorMessage))
                             {
                                 <p class="error-message">@absenceErrorMessage</p>
@@ -577,28 +578,204 @@
 
 
 
-                    <section>
-                        <h2>Time Reports</h2>
+                <section>
+                    <h2>Time Reports</h2>
 
-                        @if (employee.TimeReports.Count == 0)
-                        {
-                            <p>No time reports registered.</p>
-                        }
-                        else
-                        {
-                            @foreach (var report in employee.TimeReports)
-                            {
-                                <div>
-                                    <p><strong>Order Number:</strong> @report.BookingId</p>
-                                    <p><strong>Start:</strong> @report.StartTime.ToString("g")</p>
-                                    <p><strong>End:</strong> @report.EndTime.ToString("g")</p>
-                                    <p><strong>Break (minutes):</strong> @report.BreakMinutes</p>
-                                    <p><strong>Description:</strong> @report.Description</p>
-                                </div>
-                            }
-                        }
-                    </section>
+                    @if (timeReportMessage is not null)
+                    {
+                        <p class="text-success">@timeReportMessage</p>
+                    }
 
+                    @if (timeReportErrorMessage is not null)
+                    {
+                        <p class="text-danger">@timeReportErrorMessage</p>
+                    }
+
+                    @if (isAdministrator || isMyProfilePage)
+                    {
+                        <button class="btn btn-primary"
+                                @onclick="StartCreatingTimeReport"
+                                disabled="@isSubmittingTimeReport">
+                            Register Time Report
+                        </button>
+                    }
+
+                    @if (isCreatingTimeReport)
+                    {
+                        <EditForm Model="timeReportForm"
+                                  OnValidSubmit="CreateTimeReportAsync"
+                                  Context="timeReportCreateContext">
+
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <div class="mb-3">
+                                <label class="form-label">Order Number</label>
+                                <InputNumber class="form-control"
+                                             @bind-Value="timeReportForm.BookingId" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Start Time</label>
+                                <InputDate class="form-control"
+                                           Type="InputDateType.DateTimeLocal"
+                                           @bind-Value="timeReportForm.StartTime" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">End Time</label>
+                                <InputDate class="form-control"
+                                           Type="InputDateType.DateTimeLocal"
+                                           @bind-Value="timeReportForm.EndTime" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Break (minutes)</label>
+                                <InputNumber class="form-control"
+                                             @bind-Value="timeReportForm.BreakMinutes" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <InputTextArea class="form-control"
+                                               @bind-Value="timeReportForm.Description" />
+                            </div>
+
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    disabled="@isSubmittingTimeReport">
+                                @(isSubmittingTimeReport ? "Registering..." : "Register Time Report")
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    @onclick="CancelCreatingTimeReport"
+                                    disabled="@isSubmittingTimeReport">
+                                Cancel
+                            </button>
+                        </EditForm>
+                    }
+
+                    @if (employee.TimeReports.Count == 0)
+                    {
+                        <p>No time reports registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var report in employee.TimeReports)
+                        {
+                            <div class="card mb-3 p-3">
+
+                                <p><strong>Order Number:</strong> @report.BookingId</p>
+                                <p><strong>Start:</strong> @report.StartTime.ToString("g")</p>
+                                <p><strong>End:</strong> @report.EndTime.ToString("g")</p>
+                                <p><strong>Break (minutes):</strong> @report.BreakMinutes</p>
+                                <p><strong>Description:</strong> @report.Description</p>
+
+                                @if (isAdministrator || isMyProfilePage)
+                                {
+                                    @if (editingTimeReportId == report.Id)
+                                    {
+                                        <EditForm Model="timeReportForm"
+                                                  OnValidSubmit="UpdateTimeReportAsync"
+                                                  Context="timeReportEditContext">
+
+                                            <DataAnnotationsValidator />
+                                            <ValidationSummary />
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Order Number</label>
+                                                <InputNumber class="form-control"
+                                                             @bind-Value="timeReportForm.BookingId" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Start Time</label>
+                                                <InputDate class="form-control"
+                                                           Type="InputDateType.DateTimeLocal"
+                                                           @bind-Value="timeReportForm.StartTime" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">End Time</label>
+                                                <InputDate class="form-control"
+                                                           Type="InputDateType.DateTimeLocal"
+                                                           @bind-Value="timeReportForm.EndTime" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Break (minutes)</label>
+                                                <InputNumber class="form-control"
+                                                             @bind-Value="timeReportForm.BreakMinutes" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Description</label>
+                                                <InputTextArea class="form-control"
+                                                               @bind-Value="timeReportForm.Description" />
+                                            </div>
+
+                                            <button type="submit"
+                                                    class="btn btn-success"
+                                                    disabled="@isUpdatingTimeReport">
+                                                @(isUpdatingTimeReport ? "Saving..." : "Save Changes")
+                                            </button>
+
+                                            <button type="button"
+                                                    class="btn btn-secondary"
+                                                    @onclick="CancelEditingTimeReport"
+                                                    disabled="@isUpdatingTimeReport">
+                                                Cancel
+                                            </button>
+                                        </EditForm>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn btn-primary"
+                                                @onclick="() => StartEditingTimeReport(report)">
+                                            Edit
+                                        </button>
+                                    }
+                                }
+
+                                @if (isAdministrator)
+                                {
+                                    <button type="button"
+                                            class="absence-delete-button"
+                                            disabled="@isDeletingTimeReport"
+                                            @onclick="() => ConfirmDeleteTimeReport(report.Id)">
+                                        Delete
+                                    </button>
+
+                                    @if (confirmingDeleteTimeReportId == report.Id)
+                                    {
+                                        <div class="delete-confirmation">
+                                            <p>Are you sure you want to delete this time report?</p>
+
+                                            <button type="button"
+                                                    class="absence-confirm-button"
+                                                    disabled="@isDeletingTimeReport"
+                                                    @onclick="() => DeleteTimeReportAsync(report.Id)">
+                                                @(isDeletingTimeReport ? "Deleting..." : "Confirm Delete")
+                                            </button>
+
+                                            <button type="button"
+                                                    class="absence-cancel-button"
+                                                    disabled="@isDeletingTimeReport"
+                                                    @onclick="CancelDeleteTimeReport">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            
+                        }
+                    }
+                </section>
+                
+                
                     <section>
                         <h2>Team and Associated Orders</h2>
 
@@ -732,6 +909,32 @@
                 }
     }
     private bool isAdministrator;
+    
+    // Time report editing state.
+    private int? editingTimeReportId;
+    private bool isSubmittingTimeReport;
+    private bool isUpdatingTimeReport;
+    private bool isCreatingTimeReport;
+    private bool isDeletingTimeReport;
+    private int? confirmingDeleteTimeReportId;
+    private string? timeReportMessage;
+    private string? timeReportErrorMessage;
+    
+    private TimeReportFormModel timeReportForm = new();
+
+    private class TimeReportFormModel
+    {
+        public int BookingId { get; set; }
+
+        public DateTime StartTime { get; set; } = DateTime.Now;
+
+        public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
+
+        public int BreakMinutes { get; set; }
+
+        public string Description { get; set; } = string.Empty;
+    }
+
     private bool isSubmittingAbsence;
     private string? absenceMessage;
     private string? absenceErrorMessage;
@@ -938,6 +1141,218 @@
     private void CancelDeleteAbsence()
     {
                 confirmingDeleteAbsenceId = null;
+    }
+    // Starts a new time report.
+    private void StartCreatingTimeReport()
+    {
+        editingTimeReportId = null;
+        isCreatingTimeReport = true;
+        timeReportForm = new TimeReportFormModel();
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+
+    // Cancels time report creation.
+    private void CancelCreatingTimeReport()
+    {
+        isCreatingTimeReport = false;
+        timeReportForm = new TimeReportFormModel();
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+
+    // Loads an existing time report into the edit form.
+    private void StartEditingTimeReport(TimeReportDto report)
+    {
+        if (!isAdministrator && !isMyProfilePage)
+            return;
+
+        editingTimeReportId = report.Id;
+
+        timeReportForm = new TimeReportFormModel
+        {
+            BookingId = report.BookingId,
+            StartTime = report.StartTime,
+            EndTime = report.EndTime,
+            BreakMinutes = report.BreakMinutes,
+            Description = report.Description
+        };
+
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+
+    // Cancels editing.
+    private void CancelEditingTimeReport()
+    {
+
+        editingTimeReportId = null;
+        timeReportForm = new TimeReportFormModel();
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+    // Requests confirmation before deleting a time report.
+    private void ConfirmDeleteTimeReport(int timeReportId)
+    {
+        if (!isAdministrator)
+        {
+            return;
+        }
+
+        confirmingDeleteTimeReportId = timeReportId;
+    }
+
+    // Cancels the pending deletion.
+    private void CancelDeleteTimeReport()
+    {
+        confirmingDeleteTimeReportId = null;
+    }
+
+    // Deletes an existing time report.
+    private async Task DeleteTimeReportAsync(int timeReportId)
+    {
+        if (!isAdministrator)
+        {
+            return;
+        }
+
+        isDeletingTimeReport = true;
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+
+        try
+        {
+            await TimeReportApiService.DeleteAsync(timeReportId);
+
+            // Refresh employee information after successful deletion.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            if (editingTimeReportId == timeReportId)
+            {
+                editingTimeReportId = null;
+            }
+
+            confirmingDeleteTimeReportId = null;
+            timeReportMessage = "Time report deleted successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            timeReportErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Could not delete time report."
+                : ex.Message;
+        }
+        catch (Exception)
+        {
+            timeReportErrorMessage =
+                "An unexpected error occurred while deleting the time report.";
+        }
+        finally
+        {
+            isDeletingTimeReport = false;
+        }
+    }
+
+    // Creates a time report.
+    private async Task CreateTimeReportAsync()
+    {
+        if (employee == null || (!isAdministrator && !isMyProfilePage))
+            return;
+
+        isSubmittingTimeReport = true;
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+
+        try
+        {
+            var request = new CreateTimeReportDto
+            {
+                BookingId = timeReportForm.BookingId,
+                StartTime = timeReportForm.StartTime,
+                EndTime = timeReportForm.EndTime,
+                BreakMinutes = timeReportForm.BreakMinutes,
+                Description = timeReportForm.Description
+            };
+
+            if (isAdministrator)
+            {
+                await TimeReportApiService.CreateForEmployeeAsync(employee.Id, request);
+            }
+            else
+            {
+                await TimeReportApiService.CreateAsync(request);
+            }
+
+            employee = Id > 0
+    ? await EmployeeApiService.GetDetailsAsync(Id)
+    : await EmployeeApiService.GetMyDetailsAsync();
+
+            isCreatingTimeReport = false;
+            timeReportForm = new TimeReportFormModel();
+            timeReportMessage = "Time report registered successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            timeReportErrorMessage = ex.Message;
+        }
+        catch (Exception)
+        {
+            timeReportErrorMessage = "An unexpected error occurred while registering the time report.";
+        }
+        finally
+        {
+            isSubmittingTimeReport = false;
+        }
+    }
+
+    // Updates an existing time report.
+    private async Task UpdateTimeReportAsync()
+    {
+        if (employee == null ||
+            editingTimeReportId == null ||
+            (!isAdministrator && !isMyProfilePage))
+        {
+            return;
+        }
+
+        isUpdatingTimeReport = true;
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+
+        try
+        {
+            var request = new UpdateTimeReportDto
+            {
+                BookingId = timeReportForm.BookingId,
+                StartTime = timeReportForm.StartTime,
+                EndTime = timeReportForm.EndTime,
+                BreakMinutes = timeReportForm.BreakMinutes,
+                Description = timeReportForm.Description
+            };
+            
+            await TimeReportApiService.UpdateAsync(editingTimeReportId.Value, request);
+
+            employee = Id > 0
+    ? await EmployeeApiService.GetDetailsAsync(Id)
+    : await EmployeeApiService.GetMyDetailsAsync();     
+
+            editingTimeReportId = null;
+            timeReportForm = new TimeReportFormModel();
+            timeReportMessage = "Time report updated successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            timeReportErrorMessage = ex.Message;
+        }
+        catch (Exception)
+        {
+            timeReportErrorMessage = "An unexpected error occurred while updating the time report.";
+        }
+        finally
+        {
+            isUpdatingTimeReport = false;
+        }
     }
     // Starts editing an existing contact information entry.
     private void StartEditingContactInfo(ContactInfoDto contact)
@@ -1310,9 +1725,11 @@ private async Task CreateBankInfoAsync()
         isSubmittingBankInfo = false;
     }
 }
+    
                 }
 
           
-       
+
+
             
 

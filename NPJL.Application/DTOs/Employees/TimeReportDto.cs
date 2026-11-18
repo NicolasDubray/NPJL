@@ -20,5 +20,7 @@ namespace NPJL.Application.DTOs.Employees
         public string Description { get; init; } = string.Empty;
 
         public DateTime CreatedAt { get; init; }
+
+        public int EmployeeId { get; init; }
     }
 }
