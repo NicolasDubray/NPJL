@@ -593,13 +593,13 @@
 
                     @if (isAdministrator || isMyProfilePage)
                     {
-                        <button class="btn btn-primary"
+                        <button class="time-report-button"
                                 @onclick="StartCreatingTimeReport"
                                 disabled="@isSubmittingTimeReport">
                             Register Time Report
                         </button>
                     }
-
+                    
                     @if (isCreatingTimeReport)
                     {
                         <EditForm Model="timeReportForm"
@@ -642,20 +642,20 @@
                             </div>
 
                             <button type="submit"
-                                    class="btn btn-success"
+                                    class="	time-report-save-button"
                                     disabled="@isSubmittingTimeReport">
                                 @(isSubmittingTimeReport ? "Registering..." : "Register Time Report")
                             </button>
 
                             <button type="button"
-                                    class="btn btn-secondary"
+                                    class="	time-report-cancel-button"
                                     @onclick="CancelCreatingTimeReport"
                                     disabled="@isSubmittingTimeReport">
                                 Cancel
                             </button>
                         </EditForm>
                     }
-
+                    
                     @if (employee.TimeReports.Count == 0)
                     {
                         <p>No time reports registered.</p>
@@ -716,13 +716,13 @@
                                             </div>
 
                                             <button type="submit"
-                                                    class="btn btn-success"
+                                                    class="	time-report-save-button"
                                                     disabled="@isUpdatingTimeReport">
                                                 @(isUpdatingTimeReport ? "Saving..." : "Save Changes")
                                             </button>
 
                                             <button type="button"
-                                                    class="btn btn-secondary"
+                                                    class="	time-report-cancel-button"
                                                     @onclick="CancelEditingTimeReport"
                                                     disabled="@isUpdatingTimeReport">
                                                 Cancel
@@ -732,7 +732,7 @@
                                     else
                                     {
                                         <button type="button"
-                                                class="btn btn-primary"
+                                                class="time-report-button"
                                                 @onclick="() => StartEditingTimeReport(report)">
                                             Edit
                                         </button>

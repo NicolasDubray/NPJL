@@ -184,7 +184,50 @@
     .personnel-page .absence-form > div {
         margin-bottom: 16px;
     }
+/* Time Report actions */
+.personnel-page .time-report-button,
+.personnel-page .time-report-save-button,
+.personnel-page .time-report-cancel-button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
 
+/* Register and edit buttons */
+.personnel-page .time-report-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .time-report-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.04);
+    }
+
+/* Save buttons */
+.personnel-page .time-report-save-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .time-report-save-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.04);
+    }
+
+/* Cancel buttons */
+.personnel-page .time-report-cancel-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .time-report-cancel-button:hover {
+        background-color: #AEAEAE;
+    }
 /* Mobilanpassning */
 @media (max-width: 768px) {
     .personnel-page {
