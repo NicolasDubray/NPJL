@@ -43,16 +43,121 @@
                     </div>
                 </div>
 
+                
                 <section>
                     <h2>Basic Information</h2>
 
                     <p><strong>Personal Identity Number:</strong> @employee.SSN</p>
                     <p><strong>Vacation Days:</strong> @employee.VacationDays</p>
-                    <p>
-                        <strong>Status:</strong>
-                        @(employee.IsActive ? "Active" : "Inactive")
-                    </p>
+
+                    @if (isAdministrator)
+                    {
+                        @if (!isEditingVacationDays)
+                        {
+                            <button type="button"
+                                    class="absence-edit-button"
+                                    @onclick="StartEditingVacationDays">
+                                Edit Vacation Days
+                            </button>
+                        }
+                        else
+                        {
+                            <EditForm Model="vacationDaysForm"
+                                      OnValidSubmit="SaveVacationDaysAsync"
+                                      Context="vacationDaysContext"
+                                      class="absence-form">
+
+                                <div>
+                                    <label>Vacation Days</label>
+                                    <InputNumber @bind-Value="vacationDaysForm.VacationDays" />
+                                </div>
+
+                                <button type="submit"
+                                        class="absence-edit-button"
+                                        disabled="@isSavingVacationDays">
+                                    @(isSavingVacationDays ? "Saving..." : "Save Changes")
+                                </button>
+
+                                <button type="button"
+                                        class="absence-cancel-button"
+                                        disabled="@isSavingVacationDays"
+                                        @onclick="CancelEditingVacationDays">
+                                    Cancel
+                                </button>
+                            </EditForm>
+                        }
+                    }
+
+                    @if (!string.IsNullOrEmpty(vacationDaysMessage))
+                    {
+                        <p class="success-message">@vacationDaysMessage</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(vacationDaysErrorMessage))
+                    {
+                        <p class="error-message">@vacationDaysErrorMessage</p>
+                    }
+
+                    <div>
+                        <p>
+                            <strong>Status:</strong>
+                            @(employee.IsActive ? "Active" : "Inactive")
+                        </p>
+
+                        @if (isAdministrator)
+                        {
+                            @if (!isEditingEmployeeStatus)
+                            {
+                                <button type="button"
+                                        class="absence-edit-button"
+                                        @onclick="StartEditingEmployeeStatus">
+                                    Edit Status
+                                </button>
+                            }
+                            else
+                            {
+                                <EditForm Model="employeeStatusForm"
+                                          OnValidSubmit="SaveEmployeeStatusAsync"
+                                          Context="employeeStatusContext"
+                                          class="absence-form">
+
+                                    <div>
+                                        <label>Employee Status</label>
+
+                                        <InputSelect @bind-Value="employeeStatusForm.IsActive">
+                                            <option value="true">Active</option>
+                                            <option value="false">Inactive</option>
+                                        </InputSelect>
+                                    </div>
+
+                                    <button type="submit"
+                                            class="absence-edit-button"
+                                            disabled="@isSavingEmployeeStatus">
+                                        @(isSavingEmployeeStatus ? "Saving..." : "Save Changes")
+                                    </button>
+
+                                    <button type="button"
+                                            class="absence-cancel-button"
+                                            disabled="@isSavingEmployeeStatus"
+                                            @onclick="CancelEditingEmployeeStatus">
+                                        Cancel
+                                    </button>
+                                </EditForm>
+                            }
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(employeeStatusMessage))
+                    {
+                        <p class="success-message">@employeeStatusMessage</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(employeeStatusErrorMessage))
+                    {
+                        <p class="error-message">@employeeStatusErrorMessage</p>
+                    }
                 </section>
+
 
                 
                     <section>
@@ -857,6 +962,201 @@
 
         public string ClearingNumber { get; set; } = string.Empty;
     }
+    // Vacation days editing state.
+    private bool isEditingVacationDays;
+    private bool isSavingVacationDays;
+    private string? vacationDaysMessage;
+    private string? vacationDaysErrorMessage;
+    
+    private VacationDaysFormModel vacationDaysForm = new();
+
+    private class VacationDaysFormModel
+    {
+        public int VacationDays { get; set; }
+    }
+    
+    // Employee status editing state.
+    private bool isEditingEmployeeStatus;
+    private bool isSavingEmployeeStatus;
+    private string? employeeStatusMessage;
+    private string? employeeStatusErrorMessage;
+
+    private EmployeeStatusFormModel employeeStatusForm = new();
+
+    private class EmployeeStatusFormModel
+    {
+        public bool IsActive { get; set; }
+    }
+
+    // Starts editing the employee's vacation days.
+    private void StartEditingVacationDays()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isEditingVacationDays = true;
+
+        vacationDaysForm = new VacationDaysFormModel
+        {
+            VacationDays = employee.VacationDays
+        };
+
+        vacationDaysMessage = null;
+        vacationDaysErrorMessage = null;
+    }
+
+    // Cancels editing vacation days.
+    private void CancelEditingVacationDays()
+    {
+        isEditingVacationDays = false;
+        vacationDaysForm = new VacationDaysFormModel();
+
+        vacationDaysMessage = null;
+        vacationDaysErrorMessage = null;
+    }
+
+    // Saves the updated vacation days.
+    private async Task SaveVacationDaysAsync()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isSavingVacationDays = true;
+        vacationDaysMessage = null;
+        vacationDaysErrorMessage = null;
+
+        try
+        {
+            var request = new UpdateVacationDaysDto
+            {
+                VacationDays = vacationDaysForm.VacationDays
+            };
+
+            await EmployeeApiService.UpdateVacationDaysAsync(
+                employee.Id,
+                request);
+
+            // Refresh employee information after successful update.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            isEditingVacationDays = false;
+            vacationDaysForm = new VacationDaysFormModel();
+
+            vacationDaysMessage = "Vacation days updated successfully.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            vacationDaysErrorMessage =
+                "You do not have permission to update vacation days.";
+        }
+        catch (HttpRequestException)
+        {
+            vacationDaysErrorMessage =
+                "Could not update vacation days. Please check the API connection.";
+        }
+        
+        catch (Exception)
+        {
+            vacationDaysErrorMessage =
+                "An unexpected error occurred while updating vacation days.";
+        }
+        finally
+        {
+            isSavingVacationDays = false;
+        }
+    }
+    
+    // Starts editing the employee's active status.
+    private void StartEditingEmployeeStatus()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isEditingEmployeeStatus = true;
+
+        employeeStatusForm = new EmployeeStatusFormModel
+        {
+            IsActive = employee.IsActive
+        };
+
+        employeeStatusMessage = null;
+        employeeStatusErrorMessage = null;
+    }
+
+    // Cancels editing the employee's status.
+    private void CancelEditingEmployeeStatus()
+    {
+        isEditingEmployeeStatus = false;
+        employeeStatusForm = new EmployeeStatusFormModel();
+
+        employeeStatusMessage = null;
+        employeeStatusErrorMessage = null;
+    }
+
+    // Saves the updated employee status.
+    private async Task SaveEmployeeStatusAsync()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isSavingEmployeeStatus = true;
+        employeeStatusMessage = null;
+        employeeStatusErrorMessage = null;
+
+        try
+        {
+            var request = new UpdateEmployeeStatusDto
+            {
+                IsActive = employeeStatusForm.IsActive
+            };
+
+            await EmployeeApiService.UpdateEmployeeStatusAsync(
+                employee.Id,
+                request);
+
+            // Refresh employee information after successful update.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            isEditingEmployeeStatus = false;
+            employeeStatusForm = new EmployeeStatusFormModel();
+
+            employeeStatusMessage = "Employee status updated successfully.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            employeeStatusErrorMessage =
+                "You do not have permission to update employee status.";
+        }
+        catch (HttpRequestException)
+        {
+            employeeStatusErrorMessage =
+                "Could not update employee status. Please check the API connection.";
+        }
+        catch (Exception)
+        {
+            employeeStatusErrorMessage =
+                "An unexpected error occurred while updating employee status.";
+        }
+        finally
+        {
+            isSavingEmployeeStatus = false;
+        }
+    }
+
     // Fetches detailed information about the selected employee.
     protected override async Task OnParametersSetAsync()
     {
@@ -1664,7 +1964,7 @@ private void CancelCreatingBankInfo()
     bankInfoMessage = null;
     bankInfoErrorMessage = null;
 }
-
+    
 // Creates new banking details for the employee.
 private async Task CreateBankInfoAsync()
 {

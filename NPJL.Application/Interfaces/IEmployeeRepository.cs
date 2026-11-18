@@ -18,5 +18,7 @@ namespace NPJL.Application.Interfaces
 
         // Hämtar en anställd med tillhörande information.
         Task<Employee?> GetWithDetailsByIdAsync(int id);
+        // Sparar genomförda ändringar i databasen.
+        Task SaveChangesAsync();
     }
 }

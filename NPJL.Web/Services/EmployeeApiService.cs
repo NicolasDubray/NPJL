@@ -46,5 +46,67 @@ namespace NPJL.Web.Services
                 "api/Employees/me/details");
         }
 
+        // Updates an employee's vacation days.
+        // Requires administrator authorization.
+        public async Task UpdateVacationDaysAsync(
+            int employeeId,
+            UpdateVacationDaysDto request)
+        {
+            if (employeeId <= 0)
+            {
+                throw new ArgumentException("Invalid employee ID.");
+            }
+            
+            var client = _authService.CreateAuthenticatedClient();
+
+            var response = await client.PutAsJsonAsync(
+                $"api/Employees/{employeeId}/vacation-days",
+                request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new HttpRequestException(
+                    string.IsNullOrWhiteSpace(error)
+                        ? $"Could not update vacation days. Status code: {response.StatusCode}"
+                        : error,
+                    null,
+                    response.StatusCode);
+            }
+        }
+
+        // Updates an employee's active status.
+        // Requires administrator authorization.
+        public async Task UpdateEmployeeStatusAsync(
+            int employeeId,
+            UpdateEmployeeStatusDto request)
+        {
+            if (employeeId <= 0)
+            {
+                throw new ArgumentException("Invalid employee ID.");
+            }
+
+            var client = _authService.CreateAuthenticatedClient();
+
+            var response = await client.PutAsJsonAsync(
+                $"api/Employees/{employeeId}/status",
+                request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new HttpRequestException(
+                    string.IsNullOrWhiteSpace(error)
+                        ? $"Could not update employee status. Status code: {response.StatusCode}"
+                        : error,
+                    null,
+                    response.StatusCode);
+            }
+        }
+
+
+
     }
 }

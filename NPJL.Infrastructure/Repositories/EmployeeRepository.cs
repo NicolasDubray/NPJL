@@ -94,5 +94,10 @@ namespace NPJL.Infrastructure.Repositories
                                 .ThenInclude(b => b.Customer)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
+        // Sparar genomförda ändringar i databasen.
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

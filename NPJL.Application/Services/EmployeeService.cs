@@ -189,5 +189,67 @@ namespace NPJL.Application.Services
 
             return employees.Select(MapToEmployeeDto).ToList();
         }
+
+        // Uppdaterar en anställds semesterdagar.
+        public async Task<bool> UpdateVacationDaysAsync(
+            int employeeId,
+            UpdateVacationDaysDto request)
+        {
+            if (employeeId <= 0)
+            {
+                throw new ArgumentException("Invalid employee ID.");
+            }
+
+            ArgumentNullException.ThrowIfNull(request);
+
+            if (request.VacationDays < 0)
+            {
+                throw new ArgumentException(
+                    "Vacation days cannot be negative.");
+            }
+            
+            var employee = await _employeeRepository.GetByIdAsync(employeeId);
+
+            if (employee == null)
+            {
+                return false;
+            }
+
+            employee.VacationDays = request.VacationDays;
+
+            await _employeeRepository.UpdateAsync(employee);
+            await _employeeRepository.SaveChangesAsync();
+
+            return true;
+        }
+
+        // Updates an employee's active status.
+        public async Task<bool> UpdateEmployeeStatusAsync(
+            int employeeId,
+            UpdateEmployeeStatusDto request)
+        {
+            if (employeeId <= 0)
+            {
+                throw new ArgumentException("Invalid employee ID.");
+            }
+
+            ArgumentNullException.ThrowIfNull(request);
+
+            var employee = await _employeeRepository.GetByIdAsync(employeeId);
+
+            if (employee == null)
+            {
+                return false;
+            }
+
+            employee.IsActive = request.IsActive;
+
+            await _employeeRepository.UpdateAsync(employee);
+            await _employeeRepository.SaveChangesAsync();
+
+            return true;
+        }
+
+
     }
 }

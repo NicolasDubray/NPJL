@@ -5,6 +5,7 @@ using NPJL.Application.Services;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using NPJL.Infrastructure.Identity;
+using NPJL.Application.DTOs.Employees;
 
 namespace NPJL.Api.Controllers
 {
@@ -157,5 +158,70 @@ namespace NPJL.Api.Controllers
 
             return Ok(employees);
         }
+
+        // Updates an employee's active status.
+        // Only administrators can use this endpoint.
+        [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> UpdateEmployeeStatus(
+            int id,
+            [FromBody] UpdateEmployeeStatusDto request)
+        {
+            if (id <= 0)
+            {
+                return BadRequest("Invalid employee ID.");
+            }
+
+            try
+            {
+                var updated = await _employeeService.UpdateEmployeeStatusAsync(
+                    id,
+                    request);
+
+                if (!updated)
+                {
+                    return NotFound("Employee not found.");
+                }
+
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // Uppdaterar en anställds semesterdagar.
+        // Endast administratörer får använda denna metod.
+        [HttpPut("{id:int}/vacation-days")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> UpdateVacationDays(
+            int id,
+            [FromBody] UpdateVacationDaysDto request)
+        {
+            if (id <= 0)
+            {
+                return BadRequest("Invalid employee ID.");
+            }
+
+            try
+            {
+                var updated = await _employeeService.UpdateVacationDaysAsync(
+                    id,
+                    request);
+
+                if (!updated)
+                {
+                    return NotFound("Employee not found.");
+                }
+                
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }
