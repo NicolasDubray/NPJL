@@ -19,6 +19,7 @@
 @inject NavigationManager NavigationManager
 @inject BankInfoApiService BankInfoApiService
 @inject TimeReportApiService TimeReportApiService
+@inject SalaryApiService SalaryApiService
 
 <PageTitle>Employee Details</PageTitle>
 
@@ -309,30 +310,87 @@
                             }
                         }
                     </section>
-
-                    <section>
-                        <h2>Salary Information</h2>
-
-                        @if (employee.Salaries.Count == 0)
+                    
+                <section>
+                    <h2>Salary Information</h2>
+                    @if (isAdministrator)
+                    {
+                        @if (!isEditingSalary)
                         {
-                            <p>No salary information registered.</p>
+                            <button type="button"
+                                    class="absence-edit-button"
+                                    @onclick="StartEditingSalary">
+                                Register New Salary
+                            </button>
                         }
                         else
                         {
-                            @foreach (var salary in employee.Salaries.OrderByDescending(s => s.ValidFrom))
-                            {
+                            <EditForm Model="salaryForm"
+                                      OnValidSubmit="SaveSalaryAsync"
+                                      Context="salaryContext">
+                                <DataAnnotationsValidator />
+                                
                                 <div>
-                                    <p><strong>Salary Amount:</strong> @salary.Amount.ToString("N2") SEK</p>
-                                    <p><strong>Valid From:</strong> @salary.ValidFrom.ToShortDateString()</p>
-                                    <p>
-                                        <strong>Valid To:</strong>
-                                        @(salary.ValidTo?.ToShortDateString() ?? "Ongoing")
-                                    </p>
-                                    <p><strong>Registered:</strong> @salary.CreatedAt.ToShortDateString()</p>
+                                    <label>Salary Amount (SEK)</label>
+                                    <InputNumber @bind-Value="salaryForm.Amount" />
                                 </div>
-                            }
+
+                                <div>
+                                    <label>Valid From</label>
+                                    <InputDate @bind-Value="salaryForm.ValidFrom" />
+                                </div>
+
+                                <div>
+                                    <label>Valid To (optional)</label>
+                                    <InputDate @bind-Value="salaryForm.ValidTo" />
+                                </div>
+
+                                <button type="submit"
+                                        class="absence-edit-button"
+                                        disabled="@isSavingSalary">
+                                    @(isSavingSalary ? "Saving..." : "Save Salary")
+                                </button>
+
+                                <button type="button"
+                                        class="absence-cancel-button"
+                                        @onclick="CancelEditingSalary"
+                                        disabled="@isSavingSalary">
+                                    Cancel
+                                </button>
+                            </EditForm>
                         }
-                    </section>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(salaryMessage))
+                    {
+                        <p>@salaryMessage</p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(salaryErrorMessage))
+                    {
+                        <p>@salaryErrorMessage</p>
+                    }
+                    @if (employee.Salaries.Count == 0)
+                    {
+                        <p>No salary information registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var salary in employee.Salaries.OrderByDescending(s => s.ValidFrom))
+                        {
+                            <div>
+                                <p><strong>Salary Amount:</strong> @salary.Amount.ToString("N2") SEK</p>
+                                <p><strong>Valid From:</strong> @salary.ValidFrom.ToShortDateString()</p>
+                                <p>
+                                    <strong>Valid To:</strong>
+                                    @(salary.ValidTo?.ToShortDateString() ?? "Ongoing")
+                                </p>
+                                <p><strong>Registered:</strong> @salary.CreatedAt.ToShortDateString()</p>
+                            </div>
+                        }
+                    }
+                    
+                </section>
                     <section>
                         <h2>Tax Information</h2>
 
@@ -376,7 +434,7 @@
                                 <p><strong>Bank:</strong> @bank.BankName</p>
                                 <p><strong>Clearing Number:</strong> @bank.ClearingNumber</p>
                                 <p><strong>Account Number:</strong> @bank.BankAccountNumber</p>
-
+                                
                                 @if (isAdministrator || isMyProfilePage)
                                 {
                                     @if (editingBankInfoId != bank.Id)
@@ -962,6 +1020,109 @@
 
         public string ClearingNumber { get; set; } = string.Empty;
     }
+    private void StartEditingSalary()
+    {
+        if (!isAdministrator)
+        {
+            return;
+        }
+
+        salaryForm = new SalaryFormModel
+        {
+            Amount = 0,
+            ValidFrom = DateTime.Today,
+            ValidTo = null
+        };
+
+        salaryMessage = null;
+        salaryErrorMessage = null;
+        isEditingSalary = true;
+    }
+
+    private void CancelEditingSalary()
+    {
+        isEditingSalary = false;
+        salaryForm = new SalaryFormModel();
+
+        salaryMessage = null;
+        salaryErrorMessage = null;
+    }
+    // Registers a new salary period for the employee.
+    private async Task SaveSalaryAsync()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        salaryErrorMessage = null;
+        salaryMessage = null;
+
+        // Validate salary amount and date range.
+        if (salaryForm.Amount <= 0)
+        {
+            salaryErrorMessage = "Salary amount must be greater than zero.";
+            return;
+        }
+
+        if (salaryForm.ValidTo.HasValue &&
+            salaryForm.ValidTo.Value.Date < salaryForm.ValidFrom.Date)
+        {
+            salaryErrorMessage = "Valid To cannot be earlier than Valid From.";
+            return;
+        }
+
+        isSavingSalary = true;
+
+        try
+        {
+            var request = new CreateSalaryDto
+            {
+                Amount = salaryForm.Amount,
+                ValidFrom = salaryForm.ValidFrom,
+                ValidTo = salaryForm.ValidTo
+            };
+
+            await SalaryApiService.CreateAsync(employee.Id, request);
+
+            // Refresh employee information after successful registration.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            isEditingSalary = false;
+            salaryForm = new SalaryFormModel();
+
+            salaryMessage = "Salary registered successfully.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Conflict)
+        {
+            salaryErrorMessage =
+                "The salary period overlaps with an existing salary period.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            salaryErrorMessage =
+                "You do not have permission to register salary information.";
+        }
+        catch (HttpRequestException)
+        {
+            salaryErrorMessage =
+                "Could not register salary. Please check the API connection.";
+        }
+        catch (Exception)
+        {
+            salaryErrorMessage =
+                "An unexpected error occurred while registering salary.";
+        }
+        finally
+        {
+            isSavingSalary = false;
+        }
+    }
+    
     // Vacation days editing state.
     private bool isEditingVacationDays;
     private bool isSavingVacationDays;
@@ -1072,7 +1233,19 @@
             isSavingVacationDays = false;
         }
     }
-    
+    private bool isEditingSalary;
+    private bool isSavingSalary;
+    private string? salaryMessage;
+    private string? salaryErrorMessage;
+
+    private SalaryFormModel salaryForm = new();
+
+    private class SalaryFormModel
+    {
+        public decimal Amount { get; set; }
+        public DateTime ValidFrom { get; set; } = DateTime.Today;
+        public DateTime? ValidTo { get; set; }
+    }
     // Starts editing the employee's active status.
     private void StartEditingEmployeeStatus()
     {
@@ -2024,7 +2197,8 @@ private async Task CreateBankInfoAsync()
     {
         isSubmittingBankInfo = false;
     }
-}
+    }
+    
     
                 }
 

@@ -22,12 +22,12 @@ namespace NPJL.Infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection")));
-
+            
             // Registrerar ASP.NET Core Identity
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-
+                
                 // Lösenordskrav
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
