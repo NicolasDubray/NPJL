@@ -9,7 +9,7 @@
     <div class="mb-3">
         <label class="form-label">Request type</label>
         <InputSelect class="form-select" @bind-Value="model.Type">
-            @foreach (var type in Enum.GetValues<RequestType>())
+            @foreach (var type in AllowedTypes)
             {
                 <option value="@type">@type</option>
             }
@@ -37,12 +37,29 @@
 
 @code {
     [Parameter] public int CustomerId { get; set; }
-    [Parameter] public int BookingId { get; set; }
+    [Parameter] public int? BookingId { get; set; }
+    [Parameter] public int? InvoiceId { get; set; }
+    [Parameter] public IReadOnlyList<RequestType> AllowedTypes { get; set; } = [];
     [Parameter] public EventCallback OnSent { get; set; }
 
     private CreateRequestDto model = new();
     private string? errorMessage;
     private string? successMessage;
+
+    protected override void OnInitialized()
+    {
+        ResetModel();
+    }
+
+    private void ResetModel()
+    {
+        model = new CreateRequestDto();
+
+        if (AllowedTypes.Count > 0)
+        {
+            model.Type = AllowedTypes[0];
+        }
+    }
 
     private async Task HandleSubmit()
     {
@@ -51,12 +68,13 @@
 
         model.CustomerId = CustomerId;
         model.BookingId = BookingId;
+        model.InvoiceId = InvoiceId;
 
         try
         {
             await CustomerRequestService.CreateAsync(model);
             successMessage = "Your request has been sent";
-            model = new();
+            ResetModel();
             await OnSent.InvokeAsync();
         }
         catch (Exception)

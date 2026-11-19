@@ -12,5 +12,18 @@ namespace NPJL.Infrastructure.Repositories
             => await Context.PaymentDetails
                 .Where(p => p.CustomerId == customerId)
                 .ToListAsync();
+
+        public override async Task<PaymentDetails> CreateAsync(PaymentDetails entity)
+        {
+            await Context.PaymentDetails.AddAsync(entity);
+            await Context.SaveChangesAsync();
+
+            return entity;
+        }
+
+        public override async Task UpdateAsync(PaymentDetails entity)
+          => await Context.SaveChangesAsync();
+
     }
+
 }

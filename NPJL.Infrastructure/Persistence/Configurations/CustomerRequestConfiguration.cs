@@ -10,7 +10,10 @@ public class CustomerRequestConfiguration : IEntityTypeConfiguration<CustomerReq
     {
         builder.ToTable("Customer_Request", table =>
         {
-            table.HasCheckConstraint("CK_Customer_Request_Type", "[Type] IN ('Cancel', 'Update')");
+            table.HasCheckConstraint("CK_Customer_Request_Type", "[Type] IN ('Cancel', 'Update', 'Question')");
+            table.HasCheckConstraint(
+                "CK_Customer_Request_ExactlyOneTarget",
+                "([BookingId] IS NOT NULL AND [InvoiceId] IS NULL) OR ([BookingId] IS NULL AND [InvoiceId] IS NOT NULL)");
         });
 
         builder.HasKey(cr => cr.Id);
@@ -22,9 +25,12 @@ public class CustomerRequestConfiguration : IEntityTypeConfiguration<CustomerReq
         builder.HasIndex(cr => cr.CustomerId);
 
         builder.HasOne(r => r.Customer).WithMany()
-        .HasForeignKey(r => r.CustomerId).OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(r => r.CustomerId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(r => r.Booking).WithMany()
-        .HasForeignKey(r => r.BookingId).OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(r => r.BookingId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(r => r.Invoice).WithMany()
+            .HasForeignKey(r => r.InvoiceId).OnDelete(DeleteBehavior.Restrict);
     }
 }

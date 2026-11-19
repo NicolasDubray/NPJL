@@ -3,5 +3,6 @@
 public enum RequestType
 {
     Cancel,
-    Update
+    Update,
+    Question
 }

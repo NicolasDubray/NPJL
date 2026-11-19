@@ -6,7 +6,8 @@ namespace NPJL.Application.DTOs.Requests
     public sealed record CreateRequestDto
     {
         public int CustomerId { get; set; }
-        public int BookingId { get; set; }
+        public int? BookingId { get; set; }
+        public int? InvoiceId { get; set; }
         public RequestType Type { get; set; }
 
         [Required(ErrorMessage = "Please describe your request")]

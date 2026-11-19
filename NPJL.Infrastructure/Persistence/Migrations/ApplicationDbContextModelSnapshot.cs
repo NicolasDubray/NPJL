@@ -384,7 +384,7 @@ namespace NPJL.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BookingId")
+                    b.Property<int?>("BookingId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -397,6 +397,9 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("InvoiceId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsReviewed")
                         .HasColumnType("bit");
@@ -412,9 +415,13 @@ namespace NPJL.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("InvoiceId");
+
                     b.ToTable("Customer_Request", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Customer_Request_Type", "[Type] IN ('Cancel', 'Update')");
+                            t.HasCheckConstraint("CK_Customer_Request_ExactlyOneTarget", "([BookingId] IS NOT NULL AND [InvoiceId] IS NULL) OR ([BookingId] IS NULL AND [InvoiceId] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Customer_Request_Type", "[Type] IN ('Cancel', 'Update', 'Question')");
                         });
                 });
 
@@ -922,8 +929,7 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                     b.HasOne("NPJL.Domain.Entities.Booking", "Booking")
                         .WithMany()
                         .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("NPJL.Domain.Entities.Customer", "Customer")
                         .WithMany()
@@ -931,9 +937,16 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("NPJL.Domain.Entities.Invoice", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Booking");
 
                     b.Navigation("Customer");
+
+                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("NPJL.Domain.Entities.Employment", b =>

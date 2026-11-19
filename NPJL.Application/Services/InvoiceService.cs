@@ -17,6 +17,7 @@ public class InvoiceService(IInvoiceRepository _invoiceRepository)
                      || i.Status == InvoiceStatus.Expired)
             .Select(i => new InvoiceDto
             {
+                Id = i.Id,
                 OCR = i.OCR,
                 Amount = CalculateAmount(i),
                 SendDate = i.SendDate,

@@ -4,6 +4,7 @@
 @using NPJL.Application.DTOs.Customers
 @using NPJL.Application.Services
 @using NPJL.Web.Services
+@using NPJL.Domain.Enums
 @inject BookingService BookingService
 @inject CurrentCustomerService CurrentCustomerService
 
@@ -75,8 +76,7 @@
                     <div class="card mb-4 shadow-sm">
                         <div class="card-body">
                             <h5>Request for order @selectedBookingId</h5>
-                            <OrderRequestForm CustomerId="customer.Id" BookingId="selectedBookingId.Value" />
-                            <button class="btn btn-link" @onclick="() => selectedBookingId = null">Close</button>
+                            <OrderRequestForm @key="selectedBookingId" CustomerId="customer.Id" BookingId="selectedBookingId.Value" AllowedTypes="orderRequestTypes" />
                         </div>
                     </div>
                 }
@@ -90,6 +90,7 @@
     private CustomerDto? customer;
     private int? selectedBookingId;
     private string? errorMessage;
+    private readonly RequestType[] orderRequestTypes = [RequestType.Cancel, RequestType.Update];
 
     protected override async Task OnInitializedAsync()
     {
