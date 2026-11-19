@@ -57,9 +57,11 @@ namespace NPJL.Infrastructure
             services.AddScoped<ITimeReportService, NPJL.Application.Services.TimeReportService>();
 
 
+
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
             services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
+            services.AddScoped<IEmployeeRegistrationService, EmployeeRegistrationService>();
 
             return services;
         }

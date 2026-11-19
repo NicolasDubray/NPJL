@@ -105,6 +105,39 @@ namespace NPJL.Web.Services
                     response.StatusCode);
             }
         }
+        // Registers a new employee or administrator.
+        // Requires administrator authorization.
+        public async Task<CreateEmployeeResultDto> RegisterEmployeeAsync(
+            CreateEmployeeDto request)
+        {
+            var client = _authService.CreateAuthenticatedClient();
+
+            var response = await client.PostAsJsonAsync(
+                "api/EmployeeRegistration",
+                request);
+
+            var result = await response.Content.ReadFromJsonAsync<CreateEmployeeResultDto>();
+
+            if (result != null)
+            {
+                return result;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new HttpRequestException(
+                    string.IsNullOrWhiteSpace(error)
+                        ? $"Employee registration failed. Status code: {response.StatusCode}"
+                        : error,
+                    null,
+                    response.StatusCode);
+            }
+
+            throw new HttpRequestException(
+                "The API returned an unexpected response during registration.");
+        }
 
 
 

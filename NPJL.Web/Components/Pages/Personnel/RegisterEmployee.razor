@@ -1,0 +1,201 @@
+﻿@page "/personnel/register-employee"
+
+@using System.ComponentModel.DataAnnotations
+@using NPJL.Application.DTOs.Employees
+@using NPJL.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject EmployeeApiService EmployeeApiService
+
+@if (isAdministrator)
+{
+    <div class="register-employee-page">
+
+        <div class="register-employee-heading">
+            <h1>Register Employee</h1>
+            <p>Register a new employee or administrator.</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="register-employee-message success-message">
+                @successMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="register-employee-message error-message">
+                @errorMessage
+            </div>
+        }
+
+        <EditForm Model="@formModel" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="register-employee-form">
+
+                <div class="register-employee-field">
+                    <label>First Name</label>
+                    <InputText @bind-Value="formModel.FirstName" />
+                    <ValidationMessage For="@(() => formModel.FirstName)" />
+                </div>
+
+                <div class="register-employee-field">
+                    <label>Last Name</label>
+                    <InputText @bind-Value="formModel.LastName" />
+                    <ValidationMessage For="@(() => formModel.LastName)" />
+                </div>
+
+                <div class="register-employee-field">
+                    <label>SSN</label>
+                    <InputText @bind-Value="formModel.SSN" />
+                    <ValidationMessage For="@(() => formModel.SSN)" />
+                </div>
+
+                <div class="register-employee-field">
+                    <label>Address</label>
+                    <InputText @bind-Value="formModel.Address" />
+                    <ValidationMessage For="@(() => formModel.Address)" />
+                </div>
+
+                <div class="register-employee-field">
+                    <label>Telephone</label>
+                    <InputText @bind-Value="formModel.Telephone" />
+                    <ValidationMessage For="@(() => formModel.Telephone)" />
+                </div>
+
+                <div class="register-employee-field">
+                    <label>Email</label>
+                    <InputText @bind-Value="formModel.Email" />
+                    <ValidationMessage For="@(() => formModel.Email)" />
+                </div>
+
+                <div class="register-employee-field">
+                    <label>Password</label>
+                    <InputText type="password" @bind-Value="formModel.Password" />
+                    <ValidationMessage For="@(() => formModel.Password)" />
+                </div>
+
+                <div class="register-employee-checkbox">
+                    <InputCheckbox @bind-Value="formModel.IsAdministrator" />
+                    <label>Register as Administrator</label>
+                </div>
+
+                <div class="register-employee-button-container">
+                    <button type="submit"
+                            class="register-employee-button"
+                            disabled="@isRegistering">
+                        @(isRegistering ? "Registering..." : "Register")
+                    </button>
+                </div>
+
+            </div>
+        </EditForm>
+
+    </div>
+}
+else if (authenticationChecked)
+{
+    <p>You are not authorized to access this page.</p>
+}
+@code {
+    private EmployeeRegistrationFormModel formModel = new();
+
+    private bool isRegistering;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        isRegistering = true;
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            var request = new CreateEmployeeDto
+            {
+                FirstName = formModel.FirstName,
+                LastName = formModel.LastName,
+                SSN = formModel.SSN,
+                Address = formModel.Address,
+                Telephone = formModel.Telephone,
+                Email = formModel.Email,
+                Password = formModel.Password,
+                IsAdministrator = formModel.IsAdministrator
+            };
+
+            var result = await EmployeeApiService.RegisterEmployeeAsync(request);
+
+            if (result.Succeeded)
+            {
+                successMessage = result.Message;
+                formModel = new EmployeeRegistrationFormModel();
+            }
+            else
+            {
+                errorMessage = result.Message;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "An error occurred during registration."
+                : ex.Message;
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred during registration.";
+        }
+        finally
+        {
+            isRegistering = false;
+        }
+    }
+
+    private class EmployeeRegistrationFormModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(20)]
+        public string SSN { get; set; } = string.Empty;
+
+        [Required]
+        public string Address { get; set; } = string.Empty;
+
+        [Required]
+        public string Telephone { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(8)]
+        public string Password { get; set; } = string.Empty;
+
+        public bool IsAdministrator { get; set; }
+    }
+    private bool isAdministrator;
+    private bool authenticationChecked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        isAdministrator = authenticationState.User.IsInRole("Administrator");
+
+        authenticationChecked = true;
+    }
+}

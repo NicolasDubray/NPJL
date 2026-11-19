@@ -1,0 +1,191 @@
+﻿/* Main page container */
+.register-employee-page {
+    width: 100%;
+    padding: 30px 7%;
+    color: #222;
+}
+
+/* Page heading */
+.register-employee-heading {
+    margin-bottom: 25px;
+}
+
+    .register-employee-heading h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .register-employee-heading p {
+        margin: 6px 0 0;
+        color: #666;
+    }
+
+/* Form layout */
+.register-employee-form {
+    display: grid;
+    grid-template-columns: 180px minmax(250px, 400px);
+    gap: 15px 12px;
+    align-items: start;
+    max-width: 650px;
+}
+
+/* Individual form fields */
+.register-employee-field {
+    display: contents;
+}
+
+    .register-employee-field label {
+        grid-column: 1;
+        align-self: center;
+        font-weight: 500;
+    }
+
+    .register-employee-field input {
+        grid-column: 2;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 11px 14px;
+        background-color: #DCDCDC;
+        color: #222;
+        border: 1px solid #AEAEAE;
+        border-radius: 5px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+        .register-employee-field input:focus {
+            border-color: #777;
+            background-color: #D0D0D0;
+        }
+
+        .register-employee-field input::placeholder {
+            color: #666;
+        }
+
+    .register-employee-field validation-message {
+        grid-column: 2;
+    }
+
+/* Validation messages */
+.validation-message {
+    grid-column: 2;
+    color: #8B2020;
+    font-size: 13px;
+}
+
+/* Checkbox */
+.register-employee-checkbox {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+    .register-employee-checkbox input {
+        cursor: pointer;
+    }
+
+    .register-employee-checkbox label {
+        cursor: pointer;
+    }
+
+/* Button container */
+.register-employee-button-container {
+    grid-column: 1 / -1;
+    margin-top: 5px;
+}
+
+/* Register button – matching Personnel buttons */
+.register-employee-button {
+    padding: 11px 20px;
+    background-color: #C5C5C5;
+    color: #222;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+    .register-employee-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.04);
+    }
+
+    .register-employee-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+/* Success and error messages */
+.register-employee-message {
+    margin-bottom: 18px;
+    padding: 15px 20px;
+    background-color: #C5C5C5;
+    border-radius: 5px;
+    max-width: 650px;
+}
+
+.success-message {
+    color: #234523;
+}
+
+.error-message {
+    color: #8B2020;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .register-employee-page {
+        padding: 20px 12px;
+    }
+
+    .register-employee-heading h1 {
+        font-size: 24px;
+    }
+
+    .register-employee-form {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        max-width: 100%;
+    }
+
+    .register-employee-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+        .register-employee-field label {
+            align-self: auto;
+        }
+
+        .register-employee-field input {
+            width: 100%;
+        }
+
+    .validation-message {
+        grid-column: 1;
+    }
+
+    .register-employee-checkbox {
+        margin-top: 10px;
+    }
+
+    .register-employee-button-container {
+        margin-top: 10px;
+    }
+
+    .register-employee-button {
+        width: 100%;
+    }
+
+    .register-employee-message {
+        max-width: 100%;
+    }
+}
