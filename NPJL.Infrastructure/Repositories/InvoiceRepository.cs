@@ -1,45 +1,24 @@
-﻿using NPJL.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.EntityFrameworkCore;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
+using NPJL.Domain.Enums;
+using NPJL.Infrastructure.Persistence;
 
 namespace NPJL.Infrastructure.Repositories
 {
-    public class InvoiceRepository
+    public class InvoiceRepository(ApplicationDbContext context) : Repository<Invoice>(context), IInvoiceRepository
     {
-        public async Task DeleteAsync()
-        {
-            // Implement the logic to remove an invoice from the database.
-        }
-        public async Task<IReadOnlyList<InvoiceRepository>> GetAllAsync()
-        {
-            // Implement the logic to retrieve all invoices from the database.
-            return new List<InvoiceRepository>();
-        }
-        public async Task<InvoiceRepository?> GetByIdAsync(int id)
-        {
-            // Implement the logic to retrieve an invoice by its ID from the database.
-            return null;
-        }
-        public async Task<InvoiceRepository> CreateAsync(InvoiceRepository invoice)
-        {
-            // Implement the logic to create a new invoice in the database.
-            return invoice;
-        }
-        public async Task UpdateAsync(InvoiceRepository invoice)
-        {
-            // Implement the logic to update an existing invoice in the database.
-        }
-        public async Task<IReadOnlyList<InvoiceRepository>> GetByCustomerIdAsync(int customerId)
-        {
-            // Implement the logic to retrieve invoices by customer ID from the database.
-            return new List<InvoiceRepository>();
-        }
-        public async Task<IReadOnlyList<InvoiceRepository>> GetByStatusAsync(InvoiceStatus status)
-        {
-            // Implement the logic to retrieve invoices by status from the database.
-            return new List<InvoiceRepository>();
-        }
+        public async Task<IReadOnlyList<Invoice>> GetByCustomerIdAsync(int customerId)
+            => await Context.Invoices
+                .Where(i => i.CustomerId == customerId)
+                .Include(i => i.InvoiceBookings)
+                    .ThenInclude(ib => ib.Booking)
+                    .ThenInclude(b => b.BookingServices)
+                .ToListAsync();
 
+        public Task<IReadOnlyList<Invoice>> GetByStatusAsync(InvoiceStatus status)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

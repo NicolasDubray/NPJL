@@ -13,15 +13,20 @@ namespace NPJL.Infrastructure.Repositories
     // Implementerar ITimeReportRepository och dess CRUD-operationer.
     public class TimeReportRepository : ITimeReportRepository
     {
-        private readonly ApplicationDbContext _context;
+        public async Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAsync(int employeeId)
+            => await Context.TimeReports
+                .Where(tr => tr.EmployeeId == employeeId)
+                .ToListAsync();
 
-        public TimeReportRepository(ApplicationDbContext context)
+        public Task<IReadOnlyList<TimeReport>> GetByCustomerIdAsync(int customerId)
         {
-            _context = context;
+            throw new NotImplementedException();
         }
 
-        // Hämtar samtliga tidrapporter från databasen.
-        public async Task<IReadOnlyList<TimeReport>> GetAllAsync()
+        public Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAndDateRangeAsync(
+            int employeeId,
+            DateTime startDate,
+            DateTime endDate)
         {
             return await _context.TimeReports
                 .AsNoTracking()

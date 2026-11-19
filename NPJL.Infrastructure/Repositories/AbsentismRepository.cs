@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using NPJL.Application.Interfaces;
+﻿using NPJL.Application.Interfaces;
 using NPJL.Domain.Entities;
 using NPJL.Infrastructure.Persistence;
 

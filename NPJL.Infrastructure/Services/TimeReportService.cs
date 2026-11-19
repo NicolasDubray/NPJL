@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using NPJL.Application.Interfaces;
+﻿using NPJL.Application.Interfaces;
 using NPJL.Domain.Entities;
 
 

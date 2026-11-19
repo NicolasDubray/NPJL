@@ -5,6 +5,7 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+		<UserSecretsId>73aa7dd3-8548-40a9-9bcb-329903506c7e</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -14,6 +15,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\NPJL.Application\NPJL.Application.csproj" />
+		<ProjectReference Include="..\NPJL.Infrastructure\NPJL.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>

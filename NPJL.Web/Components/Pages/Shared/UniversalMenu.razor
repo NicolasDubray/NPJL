@@ -41,8 +41,9 @@
                 @if (auth.User.IsInRole("Customer"))
                 {
                     <a href="#" @onclick:preventDefault="true">Offers</a>
-                    <a href="#" @onclick:preventDefault="true">Active orders</a>
-                    <a href="#" @onclick:preventDefault="true">Pending invoices</a>
+                    <a href="/customerprofile" @onclick="CloseMenu">Customer Profile</a>
+                    <a href="/customerOrders" @onclick="CloseMenu">Orders</a>
+                    <a href="/customerInvoice" @onclick="CloseMenu">Invoices</a>
                 }
 
                 <!-- Anställd – visas när anställd eller administratör är inloggad -->

@@ -1,8 +1,9 @@
-using NPJL.Web.Components;
-using NPJL.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using NPJL.Web.Configuration;
+using NPJL.Infrastructure;
+using NPJL.Web.Components;
+using NPJL.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpClient("NPJL.Api", client =>
 {
     var apiUrl = builder.Configuration["ApiSettings:BaseUrl"];
-    
+
     client.BaseAddress = new Uri(apiUrl
         ?? throw new InvalidOperationException(
             "API BaseUrl is missing from configuration."));
@@ -30,6 +31,8 @@ builder.Services.AddScoped<SalaryApiService>();
 // Registrerar gemensamma skatteinställningar.
 builder.Services.Configure<TaxSettings>(
     builder.Configuration.GetSection("TaxSettings"));
+builder.Services.AddScoped<CurrentCustomerService>();
+
 // Registrerar autentiseringshantering
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 
@@ -39,6 +42,7 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 // Registrerar skyddad sessionslagring för autentisering.
 builder.Services.AddScoped<ProtectedSessionStorage>();
+builder.Services.AddInfrastructure(builder.Configuration);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace NPJL.Application.DTOs.Invoices
+﻿namespace NPJL.Application.DTOs.Invoices
 {
-    internal class InvoiceDto
+    public sealed record InvoiceDto
     {
+        public int Id { get; init; }
+        public string OCR { get; init; } = "";
+        public decimal Amount { get; init; }
+        public DateTime? SendDate { get; init; }
+        public DateTime? ExpiryDate { get; init; }
+        public string Status { get; init; } = "";
     }
 }

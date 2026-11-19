@@ -1,0 +1,108 @@
+﻿@page "/customerOrders"
+@rendermode InteractiveServer
+@using NPJL.Application.DTOs.Bookings
+@using NPJL.Application.DTOs.Customers
+@using NPJL.Application.Services
+@using NPJL.Web.Services
+@using NPJL.Domain.Enums
+@inject BookingService BookingService
+@inject CurrentCustomerService CurrentCustomerService
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+            <h1 class="h1 mb-4 text-center">Orders</h1>
+            @if (errorMessage != null)
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+            @if (bookings != null)
+            {
+                <h3 class="h4">Ongoing orders</h3>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <table class="table table-striped table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var b in bookings.Where(b => b.Status == "Received" || b.Status == "InProgress")
+                                    .OrderByDescending(b => b.StartTime))
+                                {
+                                    <tr>
+                                        <td>@b.Id</td>
+                                        <td>@b.StartTime</td>
+                                        <td>@b.EndTime</td>
+                                        <td>@b.Status</td>
+                                        <td><button class="btn btn-sm btn-outline-secondary" @onclick="() => selectedBookingId = b.Id">Request</button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <h3 class="h4">Order history</h3>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <table class="table table-striped table-hover table-bordered">
+                            <thead>
+                                <tr><th>Order</th><th>Start</th><th>End</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var b in bookings.Where(b => b.Status == "Finished")
+                                    .OrderByDescending(b => b.StartTime))
+                                {
+                                    <tr>
+                                        <td>@b.Id</td>
+                                        <td>@b.StartTime</td>
+                                        <td>@b.EndTime</td>
+                                        <td>@b.Status</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @if (selectedBookingId != null && customer != null)
+                {
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-body">
+                            <h5>Request for order @selectedBookingId</h5>
+                            <OrderRequestForm @key="selectedBookingId" CustomerId="customer.Id" BookingId="selectedBookingId.Value" AllowedTypes="orderRequestTypes" />
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<BookingDto>? bookings;
+    private CustomerDto? customer;
+    private int? selectedBookingId;
+    private string? errorMessage;
+    private readonly RequestType[] orderRequestTypes = [RequestType.Cancel, RequestType.Update];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            customer = await CurrentCustomerService.GetCurrentCustomerAsync();
+            if (customer == null) return;
+            bookings = await BookingService.GetByCustomerIdAsync(customer.Id);
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not load your orders, please try again";
+        }
+    }
+}

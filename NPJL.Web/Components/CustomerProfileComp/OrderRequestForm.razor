@@ -1,0 +1,85 @@
+﻿@using NPJL.Application.DTOs.Requests
+@using NPJL.Application.Services
+@using NPJL.Domain.Enums
+@inject CustomerRequestService CustomerRequestService
+
+<EditForm Model="model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label class="form-label">Request type</label>
+        <InputSelect class="form-select" @bind-Value="model.Type">
+            @foreach (var type in AllowedTypes)
+            {
+                <option value="@type">@type</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea class="form-control" rows="4" @bind-Value="model.Description" />
+        <ValidationMessage For="() => model.Description" />
+    </div>
+
+    @if (errorMessage != null)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (successMessage != null)
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+
+    <button type="submit" class="btn btn-primary">Send request</button>
+</EditForm>
+
+@code {
+    [Parameter] public int CustomerId { get; set; }
+    [Parameter] public int? BookingId { get; set; }
+    [Parameter] public int? InvoiceId { get; set; }
+    [Parameter] public IReadOnlyList<RequestType> AllowedTypes { get; set; } = [];
+    [Parameter] public EventCallback OnSent { get; set; }
+
+    private CreateRequestDto model = new();
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override void OnInitialized()
+    {
+        ResetModel();
+    }
+
+    private void ResetModel()
+    {
+        model = new CreateRequestDto();
+
+        if (AllowedTypes.Count > 0)
+        {
+            model.Type = AllowedTypes[0];
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        model.CustomerId = CustomerId;
+        model.BookingId = BookingId;
+        model.InvoiceId = InvoiceId;
+
+        try
+        {
+            await CustomerRequestService.CreateAsync(model);
+            successMessage = "Your request has been sent";
+            ResetModel();
+            await OnSent.InvokeAsync();
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not send the request, please try again";
+        }
+    }
+}
