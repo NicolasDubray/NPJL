@@ -28,7 +28,10 @@ namespace NPJL.Infrastructure.Repositories
                 .Include(c => c.PaymentDetails)
                 .ToListAsync();
         }
-
+        public override async Task UpdateAsync(Customer entity)
+        {
+            await Context.SaveChangesAsync();
+        }
         public async Task<Customer?> GetByEmailAsync(string email)
         {
             return await Context.Customers

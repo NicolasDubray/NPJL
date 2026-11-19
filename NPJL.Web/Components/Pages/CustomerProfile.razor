@@ -1,113 +1,281 @@
 ﻿@page "/customerprofile"
 @rendermode InteractiveServer
+@using NPJL.Application.DTOs.Customers
+@using NPJL.Application.Services
+@using NPJL.Web.Services
+@inject CurrentCustomerService CurrentCustomerService
+@inject CustomerService CustomerService
+@inject PaymentDetailsService PaymentDetailsService
 
-<div class="container"> @* tillfälligt tills MainLayout är fixad. *@   
-
+<div class="container">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-9">
             <h1 class="h1 mb-4 text-center">CustomerProfile</h1>
 
-            <h3 class="h4">Customer information</h3>
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <table class="table table-striped table-hover table-bordered">
-                        <thead>
-                            <tr><th>Customer Number</th><th>Name</th><th>Email</th><th>Phone</th><th>Address</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Id</td><td>Anna Svensson</td><td>Anna@exempel.se</td><td>0711111111</td><td>SverigeBästaGata 17B</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            @if (errorMessage != null)
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
 
-            <h3 class="h4 ">Ongoing orders</h3>
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <table class="table table-striped table-hover table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Order</th><th>Start</th><th>End</th><th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>2</td><td>2026-07-10</td><td>2026-09-10</td><td>InProgress</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            @if (successMessage != null)
+            {
+                <div class="alert alert-success">@successMessage</div>
+            }
 
-            <h3 class="h4">Pending invoices</h3>
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                <table class="table table-striped table-hover table-bordered">
-                    <thead>
-                        <tr><th>OCR</th><th>Amount</th><th>Send date</th><th>Expiry date</th><th>Status</th></tr>
-                    </thead>
-
-                    <tbody>
-                        <tr>
-                            <td>12345678</td><td>24970</td><td>2026-10-19</td><td>2026-11-25</td><td>Sent</td>
-                        </tr>
-                    </tbody>
-                </table>
+            @if (customer != null)
+            {
+                <h3 class="h4">Customer information</h3>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <table class="table table-striped table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Customer Number</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>@customer.Id</td>
+                                    <td>@customer.Name</td>
+                                    <td>@customer.ContactInfo?.Email</td>
+                                    <td>@customer.ContactInfo?.Telephone</td>
+                                    <td>@customer.ContactInfo?.Address</td>
+                                    <td><button class="btn btn-sm btn-outline-secondary" @onclick="StartEdit">Edit</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-            <h3 class="h4">Order history</h3>
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <table class="table table-striped table-hover table-bordered">
-                        <thead>
-                            <tr><th>Order</th><th>Start</th><th>End</th><th>Status</th></tr>  
-                        </thead>
-                        <tbody>
-                            <tr>
-                            <td>1</td><td>2026-08-10</td><td>2026-10-10</td><td>Finished</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <h3 class="h4">Invoice history</h3>
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <table class="table table-striped table-hover table-bordered">
-                        <thead>
-                            <tr><th>OCR</th><th>Amount</th><th>Send date</th><th>Expiry date</th><th>Status</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>87654321</td><td>18500</td><td>2026-08-15</td><td>2026-09-15</td><td>Paid</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                @if (isEditing)
+                {
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-body">
+                            <h5>Edit your information</h5>
+                            <EditForm Model="editModel" OnValidSubmit="SaveEdit">
+                                <DataAnnotationsValidator />
 
-            <h3 class="h4">Bank details</h3>
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <table class="table table-striped table-hover table-bordered">
-                        <thead>
-                            <tr><th>Payment method</th><th>Payment reference</th><th>Active</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Bank transfer</td><td>1234-5678901</td><td>Yes</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                <div class="mb-3">
+                                    <label class="form-label">First name</label>
+                                    <InputText class="form-control" @bind-Value="editModel.FirstName" />
+                                    <ValidationMessage For="() => editModel.FirstName" />
+                                </div>
 
+                                <div class="mb-3">
+                                    <label class="form-label">Last name</label>
+                                    <InputText class="form-control" @bind-Value="editModel.LastName" />
+                                    <ValidationMessage For="() => editModel.LastName" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input class="form-control" value="@customer.ContactInfo?.Email" disabled />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Phone</label>
+                                    <InputText class="form-control" @bind-Value="editModel.Telephone" />
+                                    <ValidationMessage For="() => editModel.Telephone" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <InputText class="form-control" @bind-Value="editModel.Address" />
+                                    <ValidationMessage For="() => editModel.Address" />
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                <button type="button" class="btn btn-link" @onclick="CancelEdit">Cancel</button>
+                            </EditForm>
+                        </div>
+                    </div>
+                }
+            }
+
+            @if (customer != null && paymentDetails != null)
+            {
+                <h3 class="h4">Bank details</h3>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        @if (paymentDetails.Count == 0)
+                        {
+                            <p>No bank details registered.</p>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="StartEditBank">Add</button>
+                        }
+                        else
+                        {
+                            <table class="table table-striped table-hover table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Payment method</th>
+                                        <th>Payment reference</th>
+                                        <th>Active</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var p in paymentDetails)
+                                    {
+                                        <tr>
+                                            <td>@p.PaymentMethod</td>
+                                            <td>@p.PaymentReference</td>
+                                            <td>@(p.IsActive ? "Yes" : "No")</td>
+                                            <td><button class="btn btn-sm btn-outline-secondary" @onclick="StartEditBank">Edit</button></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+
+                @if (isEditingBank)
+                {
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-body">
+                            <h5>Edit your bank details</h5>
+                            <EditForm Model="bankModel" OnValidSubmit="SaveBank">
+                                <DataAnnotationsValidator />
+
+                                <div class="mb-3">
+                                    <label class="form-label">Payment method</label>
+                                    <InputText class="form-control" @bind-Value="bankModel.PaymentMethod" />
+                                    <ValidationMessage For="() => bankModel.PaymentMethod" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Payment reference</label>
+                                    <InputText class="form-control" @bind-Value="bankModel.PaymentReference" />
+                                    <ValidationMessage For="() => bankModel.PaymentReference" />
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <InputCheckbox class="form-check-input" id="bankActive" @bind-Value="bankModel.IsActive" />
+                                    <label class="form-check-label" for="bankActive">Active</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                <button type="button" class="btn btn-link" @onclick="CancelEditBank">Cancel</button>
+                            </EditForm>
+                        </div>
+                    </div>
+                }
+            }
         </div>
-
     </div>
-
 </div>
 
 @code {
-    
+    private CustomerDto? customer;
+    private List<PaymentDetailsDto>? paymentDetails;
+    private UpdateCustomerProfileDto editModel = new();
+    private UpdatePaymentDetailsDto bankModel = new();
+    private bool isEditing;
+    private bool isEditingBank;
+    private string? errorMessage;
+    private string? successMessage;
 
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            customer = await CurrentCustomerService.GetCurrentCustomerAsync();
+            if (customer == null) return;
+            paymentDetails = await PaymentDetailsService.GetByCustomerIdAsync(customer.Id);
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not load your profile, please try again";
+        }
+    }
+
+    private void StartEdit()
+    {
+        if (customer == null) return;
+
+        editModel = new UpdateCustomerProfileDto
+        {
+            FirstName = customer.FirstName,
+            LastName = customer.LastName,
+            Telephone = customer.ContactInfo?.Telephone ?? string.Empty,
+            Address = customer.ContactInfo?.Address ?? string.Empty
+        };
+
+        errorMessage = null;
+        successMessage = null;
+        isEditingBank = false;
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (customer == null) return;
+
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            await CustomerService.UpdateProfileAsync(customer.Id, editModel);
+            customer = await CurrentCustomerService.GetCurrentCustomerAsync();
+            isEditing = false;
+            successMessage = "Your information has been updated";
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not save your changes, please try again";
+        }
+    }
+
+    private void StartEditBank()
+    {
+        var current = paymentDetails?.FirstOrDefault();
+
+        bankModel = new UpdatePaymentDetailsDto
+        {
+            PaymentMethod = current?.PaymentMethod ?? string.Empty,
+            PaymentReference = current?.PaymentReference ?? string.Empty,
+            IsActive = current?.IsActive ?? true
+        };
+
+        errorMessage = null;
+        successMessage = null;
+        isEditing = false;
+        isEditingBank = true;
+    }
+
+    private void CancelEditBank()
+    {
+        isEditingBank = false;
+    }
+
+    private async Task SaveBank()
+    {
+        if (customer == null) return;
+
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            await PaymentDetailsService.UpdateAsync(customer.Id, bankModel);
+            paymentDetails = await PaymentDetailsService.GetByCustomerIdAsync(customer.Id);
+            isEditingBank = false;
+            successMessage = "Your bank details have been updated";
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not save your bank details, please try again";
+        }
+    }
 }

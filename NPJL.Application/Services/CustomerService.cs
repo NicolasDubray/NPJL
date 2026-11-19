@@ -25,6 +25,28 @@ namespace NPJL.Application.Services
         {
             return await _customerRepository.GetByIdAsync(id);
         }
+        public async Task UpdateProfileAsync(int customerId, UpdateCustomerProfileDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.FirstName)
+                || string.IsNullOrWhiteSpace(dto.LastName)
+                || string.IsNullOrWhiteSpace(dto.Telephone)
+                || string.IsNullOrWhiteSpace(dto.Address))
+            {
+                throw new ArgumentException("All fields are required");
+            }
+
+            var customer = await _customerRepository.GetByIdAsync(customerId)
+                ?? throw new Exception("Can not find customer");
+            var contact = customer.ContactInfos.FirstOrDefault()
+                ?? throw new Exception("Can not find contact information");
+
+            customer.FirstName = dto.FirstName.Trim();
+            customer.LastName = dto.LastName.Trim();
+            contact.Telephone = dto.Telephone.Trim();
+            contact.Address = dto.Address.Trim();
+
+            await _customerRepository.UpdateAsync(customer);
+        }
 
         public async Task<CustomerDto> GetProfileByEmailAsync(string email)
         {
@@ -36,7 +58,8 @@ namespace NPJL.Application.Services
             return new CustomerDto
             {
                 Id = customerWithDetails.Id,
-                Name = customerWithDetails.FirstName + " " + customerWithDetails.LastName,
+                FirstName = customerWithDetails.FirstName,
+                LastName = customerWithDetails.LastName,
                 ContactInfo = contact == null ? null : new ContactInfoDto()
                 {
                     Address = contact.Address,

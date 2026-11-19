@@ -1,10 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using NPJL.Infrastructure.Identity;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NPJL.Domain.Entities;
+using NPJL.Infrastructure.Identity;
 
 
 namespace NPJL.Infrastructure.Persistence
@@ -41,6 +38,7 @@ namespace NPJL.Infrastructure.Persistence
         public DbSet<Invoice> Invoices => Set<Invoice>();
         public DbSet<Absentism> Absentisms => Set<Absentism>();
         public DbSet<TimeReport> TimeReports => Set<TimeReport>();
+        public DbSet<CustomerRequest> CustomerRequests => Set<CustomerRequest>();
 
         // Kopplingstabeller
         public DbSet<BookingService> BookingServices => Set<BookingService>();
