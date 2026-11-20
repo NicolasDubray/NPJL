@@ -55,7 +55,15 @@ namespace NPJL.Infrastructure
             services.AddScoped<NPJL.Application.Services.BankInfoService>();
             services.AddScoped<ITimeReportService, NPJL.Application.Services.TimeReportService>();
 
+            services.AddScoped<IBookingRepository, BookingRepository>();
+            services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+            services.AddScoped<IPaymentDetailsRepository, PaymentDetailsRepository>();
+            services.AddScoped<ICustomerRequestRepository, CustomerRequestRepository>();
 
+            services.AddScoped<NPJL.Application.Services.BookingService>();
+            services.AddScoped<NPJL.Application.Services.InvoiceService>();
+            services.AddScoped<NPJL.Application.Services.PaymentDetailsService>();
+            services.AddScoped<NPJL.Application.Services.CustomerRequestService>();
 
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();

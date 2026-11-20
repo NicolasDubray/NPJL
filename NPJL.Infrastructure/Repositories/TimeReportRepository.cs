@@ -1,8 +1,4 @@
-﻿
-using NPJL.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using NPJL.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using NPJL.Infrastructure.Persistence;
 using NPJL.Application.Interfaces;
@@ -11,24 +7,13 @@ namespace NPJL.Infrastructure.Repositories
 {
     // Repository för hantering av tidrapporter.
     // Implementerar ITimeReportRepository och dess CRUD-operationer.
-    public class TimeReportRepository : ITimeReportRepository
+    public class TimeReportRepository(ApplicationDbContext context)
+        : ITimeReportRepository
     {
-        public async Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAsync(int employeeId)
-            => await Context.TimeReports
-                .Where(tr => tr.EmployeeId == employeeId)
-                .ToListAsync();
-
-        public Task<IReadOnlyList<TimeReport>> GetByCustomerIdAsync(int customerId)
+        // Hämtar alla tidrapporter.
+        public async Task<IReadOnlyList<TimeReport>> GetAllAsync()
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAndDateRangeAsync(
-            int employeeId,
-            DateTime startDate,
-            DateTime endDate)
-        {
-            return await _context.TimeReports
+            return await context.TimeReports
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -36,7 +21,7 @@ namespace NPJL.Infrastructure.Repositories
         // Hämtar en tidrapport via ID.
         public async Task<TimeReport?> GetByIdAsync(int id)
         {
-            return await _context.TimeReports
+            return await context.TimeReports
                 .FirstOrDefaultAsync(tr => tr.Id == id);
         }
 
@@ -44,7 +29,7 @@ namespace NPJL.Infrastructure.Repositories
         public async Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAsync(
             int employeeId)
         {
-            return await _context.TimeReports
+            return await context.TimeReports
                 .AsNoTracking()
                 .Where(tr => tr.EmployeeId == employeeId)
                 .OrderByDescending(tr => tr.StartTime)
@@ -55,7 +40,7 @@ namespace NPJL.Infrastructure.Repositories
         public async Task<IReadOnlyList<TimeReport>> GetByCustomerIdAsync(
             int customerId)
         {
-            return await _context.TimeReports
+            return await context.TimeReports
                 .AsNoTracking()
                 .Where(tr => tr.Booking.CustomerId == customerId)
                 .OrderByDescending(tr => tr.StartTime)
@@ -63,12 +48,13 @@ namespace NPJL.Infrastructure.Repositories
         }
 
         // Hämtar tidrapporter för en anställd inom ett datumintervall.
-        public async Task<IReadOnlyList<TimeReport>> GetByEmployeeIdAndDateRangeAsync(
-            int employeeId,
-            DateTime startDate,
-            DateTime endDate)
+        public async Task<IReadOnlyList<TimeReport>>
+            GetByEmployeeIdAndDateRangeAsync(
+                int employeeId,
+                DateTime startDate,
+                DateTime endDate)
         {
-            return await _context.TimeReports
+            return await context.TimeReports
                 .AsNoTracking()
                 .Where(tr =>
                     tr.EmployeeId == employeeId &&
@@ -81,7 +67,7 @@ namespace NPJL.Infrastructure.Repositories
         // Registrerar en ny tidrapport.
         public async Task<TimeReport> CreateAsync(TimeReport timeReport)
         {
-            await _context.TimeReports.AddAsync(timeReport);
+            await context.TimeReports.AddAsync(timeReport);
 
             return timeReport;
         }
@@ -89,7 +75,7 @@ namespace NPJL.Infrastructure.Repositories
         // Uppdaterar en befintlig tidrapport.
         public Task UpdateAsync(TimeReport timeReport)
         {
-            _context.TimeReports.Update(timeReport);
+            context.TimeReports.Update(timeReport);
 
             return Task.CompletedTask;
         }
@@ -97,11 +83,11 @@ namespace NPJL.Infrastructure.Repositories
         // Tar bort en tidrapport via ID.
         public async Task DeleteAsync(int id)
         {
-            var timeReport = await _context.TimeReports.FindAsync(id);
+            var timeReport = await context.TimeReports.FindAsync(id);
 
             if (timeReport != null)
             {
-                _context.TimeReports.Remove(timeReport);
+                context.TimeReports.Remove(timeReport);
             }
         }
 
@@ -110,11 +96,13 @@ namespace NPJL.Infrastructure.Repositories
         {
             try
             {
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
             }
             catch (DbUpdateException ex)
             {
-                Console.WriteLine($"Database error: {ex.InnerException?.Message}");
+                Console.WriteLine(
+                    $"Database error: {ex.InnerException?.Message}");
+
                 throw;
             }
         }
