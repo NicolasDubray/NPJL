@@ -1,0 +1,218 @@
+﻿
+.personnel-page {
+    width: 100%;
+    padding: 30px 7%;
+    color: #222;
+}
+
+/* Sidhuvud */
+.page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+    .page-heading h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .page-heading p {
+        margin: 6px 0 0;
+        color: #666;
+    }
+
+/* Lägg till anställd */
+.add-employee-button {
+    padding: 11px 20px;
+    background-color: #C5C5C5;
+    color: #222;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+    .add-employee-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.04);
+    }
+
+/* Sammanfattning */
+.personnel-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin-bottom: 18px;
+    padding: 15px 20px;
+    background-color: #DCDCDC;
+    border-radius: 5px;
+}
+
+/* Sökning och statusfilter */
+.personnel-search {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+    .personnel-search input,
+    .personnel-search select {
+        padding: 11px 14px;
+        color: #222;
+        border: 1px solid #AEAEAE;
+        border-radius: 5px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .personnel-search input {
+        flex: 1;
+        min-width: 180px;
+        background-color: #DCDCDC;
+    }
+
+    .personnel-search select {
+        min-width: 170px;
+        background-color: #C5C5C5;
+        cursor: pointer;
+    }
+
+        .personnel-search input:focus,
+        .personnel-search select:focus {
+            border-color: #777;
+            background-color: #D0D0D0;
+        }
+
+    .personnel-search input::placeholder {
+        color: #666;
+    }
+
+/* Tabell */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    background-color: #DCDCDC;
+    border-radius: 5px;
+}
+
+.personnel-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+    .personnel-table th,
+    .personnel-table td {
+        padding: 14px 18px;
+        border-bottom: 1px solid #AEAEAE;
+    }
+
+    .personnel-table th {
+        background-color: #C5C5C5;
+        font-weight: 600;
+    }
+
+    .personnel-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+        .personnel-table tbody tr:hover {
+            background-color: #D0D0D0;
+        }
+
+        .personnel-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+/* Anställningsstatus */
+.employee-status {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 13px;
+}
+
+    .employee-status.active {
+        background-color: #A9C7A9;
+        color: #234523;
+    }
+
+    .employee-status.inactive {
+        background-color: #D0A9A9;
+        color: #542323;
+    }
+
+/* Meddelanden */
+.status-message,
+.error-message {
+    padding: 15px 20px;
+    background-color: #C5C5C5;
+    border-radius: 5px;
+}
+
+.error-message {
+    color: #8B2020;
+}
+.add-employee-button {
+    padding: 11px 20px;
+    background-color: #C5C5C5;
+    color: #222;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+    .add-employee-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.06);
+    }
+/* Mobilanpassning */
+@media (max-width: 768px) {
+    .personnel-page {
+        padding: 20px 12px;
+    }
+
+    .page-heading {
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+        .page-heading h1 {
+            font-size: 24px;
+        }
+
+    .add-employee-button {
+        padding: 10px 14px;
+        white-space: nowrap;
+    }
+
+    .personnel-summary {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .personnel-search {
+        flex-direction: column;
+    }
+
+        .personnel-search input,
+        .personnel-search select {
+            width: 100%;
+            min-width: unset;
+        }
+    
+    .personnel-table th,
+    .personnel-table td {
+        padding: 12px;
+        white-space: nowrap;
+    }
+}

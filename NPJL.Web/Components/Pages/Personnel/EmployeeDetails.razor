@@ -1,0 +1,2209 @@
+﻿@page "/personnel/{Id:int}"
+@page "/my-profile"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using NPJL.Application.DTOs.Employees
+@using NPJL.Web.Services
+@using System.Net
+@using Microsoft.Extensions.Options
+@using NPJL.Web.Configuration
+@using NPJL.Application.DTOs.Absentisms
+@using NPJL.Domain.Enums
+@using System.Security.Claims
+
+@inject IOptions<TaxSettings> TaxSettings
+@inject EmployeeApiService EmployeeApiService
+@inject AbsentismApiService AbsentismApiService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ContactInfoApiService ContactInfoApiService
+@inject NavigationManager NavigationManager
+@inject BankInfoApiService BankInfoApiService
+@inject TimeReportApiService TimeReportApiService
+@inject SalaryApiService SalaryApiService
+
+<PageTitle>Employee Details</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="personnel-page">
+            
+            @if (isLoading)
+            {
+                <p>Fetching employee information...</p>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="error-message">@errorMessage</p>
+            }
+            else if (employee != null)
+            {
+                <div class="page-heading">
+                    <div>
+                        <h1>@employee.FirstName @employee.LastName</h1>
+                        <p>Detailed employee information</p>
+                    </div>
+                </div>
+
+                
+                <section>
+                    <h2>Basic Information</h2>
+
+                    <p><strong>Personal Identity Number:</strong> @employee.SSN</p>
+                    <p><strong>Vacation Days:</strong> @employee.VacationDays</p>
+
+                    @if (isAdministrator)
+                    {
+                        @if (!isEditingVacationDays)
+                        {
+                            <button type="button"
+                                    class="absence-edit-button"
+                                    @onclick="StartEditingVacationDays">
+                                Edit Vacation Days
+                            </button>
+                        }
+                        else
+                        {
+                            <EditForm Model="vacationDaysForm"
+                                      OnValidSubmit="SaveVacationDaysAsync"
+                                      Context="vacationDaysContext"
+                                      class="absence-form">
+
+                                <div>
+                                    <label>Vacation Days</label>
+                                    <InputNumber @bind-Value="vacationDaysForm.VacationDays" />
+                                </div>
+
+                                <button type="submit"
+                                        class="absence-edit-button"
+                                        disabled="@isSavingVacationDays">
+                                    @(isSavingVacationDays ? "Saving..." : "Save Changes")
+                                </button>
+
+                                <button type="button"
+                                        class="absence-cancel-button"
+                                        disabled="@isSavingVacationDays"
+                                        @onclick="CancelEditingVacationDays">
+                                    Cancel
+                                </button>
+                            </EditForm>
+                        }
+                    }
+
+                    @if (!string.IsNullOrEmpty(vacationDaysMessage))
+                    {
+                        <p class="success-message">@vacationDaysMessage</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(vacationDaysErrorMessage))
+                    {
+                        <p class="error-message">@vacationDaysErrorMessage</p>
+                    }
+
+                    <div>
+                        <p>
+                            <strong>Status:</strong>
+                            @(employee.IsActive ? "Active" : "Inactive")
+                        </p>
+
+                        @if (isAdministrator)
+                        {
+                            @if (!isEditingEmployeeStatus)
+                            {
+                                <button type="button"
+                                        class="absence-edit-button"
+                                        @onclick="StartEditingEmployeeStatus">
+                                    Edit Status
+                                </button>
+                            }
+                            else
+                            {
+                                <EditForm Model="employeeStatusForm"
+                                          OnValidSubmit="SaveEmployeeStatusAsync"
+                                          Context="employeeStatusContext"
+                                          class="absence-form">
+
+                                    <div>
+                                        <label>Employee Status</label>
+
+                                        <InputSelect @bind-Value="employeeStatusForm.IsActive">
+                                            <option value="true">Active</option>
+                                            <option value="false">Inactive</option>
+                                        </InputSelect>
+                                    </div>
+
+                                    <button type="submit"
+                                            class="absence-edit-button"
+                                            disabled="@isSavingEmployeeStatus">
+                                        @(isSavingEmployeeStatus ? "Saving..." : "Save Changes")
+                                    </button>
+
+                                    <button type="button"
+                                            class="absence-cancel-button"
+                                            disabled="@isSavingEmployeeStatus"
+                                            @onclick="CancelEditingEmployeeStatus">
+                                        Cancel
+                                    </button>
+                                </EditForm>
+                            }
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(employeeStatusMessage))
+                    {
+                        <p class="success-message">@employeeStatusMessage</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(employeeStatusErrorMessage))
+                    {
+                        <p class="error-message">@employeeStatusErrorMessage</p>
+                    }
+                </section>
+
+
+                
+                    <section>
+                        <h2>Contact Information</h2>
+
+                        @if (employee.ContactInfos.Count == 0)
+                        {
+                            <p>No contact information registered.</p>
+                        }
+                        else
+                        {
+                            @foreach (var contact in employee.ContactInfos)
+                            {
+                                <div>
+                                    <p><strong>Address:</strong> @contact.Address</p>
+                                    <p><strong>Phone:</strong> @contact.Telephone</p>
+                                    <p><strong>Email:</strong> @contact.Email</p>
+
+                                    @if (isAdministrator || isMyProfilePage)
+                                    {
+                                        <button type="button"
+                                        class="absence-edit-button"
+                                        @onclick="() => StartEditingContactInfo(contact)">
+                                            Edit
+                                        </button>
+                                    }
+
+                                    @if (editingContactInfoId == contact.Id)
+                                    {
+                                        <EditForm Model="contactInfoForm"
+                                        OnValidSubmit="SaveContactInfoAsync"
+                                        Context="contactEditContext"
+                                        class="absence-form">
+
+                                            <h3>Edit Contact Information</h3>
+
+                                            <div>
+                                                <label>Address</label>
+                                                <InputText @bind-Value="contactInfoForm.Address" />
+                                            </div>
+
+                                            <div>
+                                                <label>Phone</label>
+                                                <InputText @bind-Value="contactInfoForm.Telephone" />
+                                            </div>
+
+                                            <div>
+                                                <label>Email</label>
+                                                <InputText @bind-Value="contactInfoForm.Email" />
+                                            </div>
+
+                                            <button type="submit"
+                                            class="absence-edit-button"
+                                            disabled="@isSavingContactInfo">
+                                                @(isSavingContactInfo ? "Saving..." : "Save Changes")
+                                            </button>
+
+                                            <button type="button"
+                                            class="absence-cancel-button"
+                                            disabled="@isSavingContactInfo"
+                                            @onclick="CancelEditingContactInfo">
+                                                Cancel
+                                            </button>
+                                        </EditForm>
+                                    }
+                                </div>
+                            }
+                        }
+
+                    @if ((isAdministrator || isMyProfilePage)
+&& employee.ContactInfos.Count == 0
+&& !isCreatingContactInfo)
+                        {
+                            <button type="button"
+                            class="absence-edit-button"
+                            @onclick="StartCreatingContactInfo">
+                                Add Contact Information
+                            </button>
+                        }
+
+                        @if (isCreatingContactInfo)
+                        {
+                            <EditForm Model="contactInfoForm"
+                            OnValidSubmit="CreateContactInfoAsync"
+                            Context="newContactContext"
+                            class="absence-form">
+
+                                <h3>New Contact Information</h3>
+
+                                <div>
+                                    <label>Address</label>
+                                    <InputText @bind-Value="contactInfoForm.Address" />
+                                </div>
+
+                                <div>
+                                    <label>Phone</label>
+                                    <InputText @bind-Value="contactInfoForm.Telephone" />
+                                </div>
+
+                                <div>
+                                    <label>Email</label>
+                                    <InputText @bind-Value="contactInfoForm.Email" />
+                                </div>
+
+                                <button type="submit"
+                                class="absence-edit-button"
+                                disabled="@isSubmittingContactInfo">
+                                    @(isSubmittingContactInfo ? "Saving..." : "Save Contact Information")
+                                </button>
+
+                                <button type="button"
+                                class="absence-cancel-button"
+                                disabled="@isSubmittingContactInfo"
+                                @onclick="CancelCreatingContactInfo">
+                                    Cancel
+                                </button>
+                            </EditForm>
+                        }
+
+                        @if (!string.IsNullOrEmpty(contactInfoMessage))
+                        {
+                            <p class="success-message">@contactInfoMessage</p>
+                        }
+
+                        @if (!string.IsNullOrEmpty(contactInfoErrorMessage))
+                        {
+                            <p class="error-message">@contactInfoErrorMessage</p>
+                        }
+                    </section>
+
+                    <section>
+                        <h2>Employment History</h2>
+
+                        @if (employee.Employments.Count == 0)
+                        {
+                            <p>No employment information registered.</p>
+                        }
+                        else
+                        {
+                            @foreach (var employment in employee.Employments)
+                            {
+                                <div>
+                                    <p><strong>Employment Type:</strong> @employment.HireType</p>
+                                    <p><strong>Hire Date:</strong> @employment.HireDate.ToShortDateString()</p>
+                                    <p><strong>Role:</strong> @employment.Role</p>
+                                    <p><strong>Department:</strong> @employment.Department</p>
+                                    <p><strong>Contracted Working Hours per Week:</strong> @employment.NumWorkingHours</p>
+                                </div>
+                            }
+                        }
+                    </section>
+                    
+                <section>
+                    <h2>Salary Information</h2>
+                    @if (isAdministrator)
+                    {
+                        @if (!isEditingSalary)
+                        {
+                            <button type="button"
+                                    class="absence-edit-button"
+                                    @onclick="StartEditingSalary">
+                                Register New Salary
+                            </button>
+                        }
+                        else
+                        {
+                            <EditForm Model="salaryForm"
+                                      OnValidSubmit="SaveSalaryAsync"
+                                      Context="salaryContext">
+                                <DataAnnotationsValidator />
+                                
+                                <div>
+                                    <label>Salary Amount (SEK)</label>
+                                    <InputNumber @bind-Value="salaryForm.Amount" />
+                                </div>
+
+                                <div>
+                                    <label>Valid From</label>
+                                    <InputDate @bind-Value="salaryForm.ValidFrom" />
+                                </div>
+
+                                <div>
+                                    <label>Valid To (optional)</label>
+                                    <InputDate @bind-Value="salaryForm.ValidTo" />
+                                </div>
+
+                                <button type="submit"
+                                        class="absence-edit-button"
+                                        disabled="@isSavingSalary">
+                                    @(isSavingSalary ? "Saving..." : "Save Salary")
+                                </button>
+
+                                <button type="button"
+                                        class="absence-cancel-button"
+                                        @onclick="CancelEditingSalary"
+                                        disabled="@isSavingSalary">
+                                    Cancel
+                                </button>
+                            </EditForm>
+                        }
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(salaryMessage))
+                    {
+                        <p>@salaryMessage</p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(salaryErrorMessage))
+                    {
+                        <p>@salaryErrorMessage</p>
+                    }
+                    @if (employee.Salaries.Count == 0)
+                    {
+                        <p>No salary information registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var salary in employee.Salaries.OrderByDescending(s => s.ValidFrom))
+                        {
+                            <div>
+                                <p><strong>Salary Amount:</strong> @salary.Amount.ToString("N2") SEK</p>
+                                <p><strong>Valid From:</strong> @salary.ValidFrom.ToShortDateString()</p>
+                                <p>
+                                    <strong>Valid To:</strong>
+                                    @(salary.ValidTo?.ToShortDateString() ?? "Ongoing")
+                                </p>
+                                <p><strong>Registered:</strong> @salary.CreatedAt.ToShortDateString()</p>
+                            </div>
+                        }
+                    }
+                    
+                </section>
+                    <section>
+                        <h2>Tax Information</h2>
+
+                        <p>
+                            <strong>Tax Rate:</strong>
+                            @TaxSettings.Value.TaxRatePercent.ToString("F2") %
+                        </p>
+
+                        <p>
+                            <strong>Tax Type:</strong> Standard tax rate
+                        </p>
+
+                        <p>
+                            <strong>Tax Calculation:</strong> Estimated
+                        </p>
+                    </section>
+                <section>
+                    <h2>Banking Details</h2>
+
+                    @if (!string.IsNullOrWhiteSpace(bankInfoMessage))
+                    {
+                        <p>@bankInfoMessage</p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(bankInfoErrorMessage))
+                    {
+                        <p class="error-message">@bankInfoErrorMessage</p>
+                    }
+
+                    @if (employee.BankInfos.Count == 0)
+                    {
+                        <p>No banking details registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var bank in employee.BankInfos)
+                        {
+                            <div>
+                                <p><strong>Account Holder:</strong> @bank.AccountHolderName</p>
+                                <p><strong>Account Holder Type:</strong> @bank.AccountHolderType</p>
+                                <p><strong>Bank:</strong> @bank.BankName</p>
+                                <p><strong>Clearing Number:</strong> @bank.ClearingNumber</p>
+                                <p><strong>Account Number:</strong> @bank.BankAccountNumber</p>
+                                
+                                @if (isAdministrator || isMyProfilePage)
+                                {
+                                    @if (editingBankInfoId != bank.Id)
+                                    {
+                                        <button type="button"
+                                                class="absence-edit-button"
+                                                @onclick="() => StartEditingBankInfo(bank)">
+                                            Edit
+                                        </button>
+                                    }
+                                }
+
+                                @if (editingBankInfoId == bank.Id)
+                                {
+                                    <EditForm Model="bankInfoForm"
+                                              OnValidSubmit="SaveBankInfoAsync"
+                                              Context="bankEditContext">
+                                        <div class="absence-form">
+                                            <label>Account Holder Name</label>
+                                            <InputText @bind-Value="bankInfoForm.AccountHolderName" />
+                                            
+                                            <label>Account Holder Type</label>
+                                            <InputSelect @bind-Value="bankInfoForm.AccountHolderType">
+                                                <option value="@AccountHolderType.Individual">Individual</option>
+                                                <option value="@AccountHolderType.Company">Company</option>
+                                            </InputSelect>
+
+                                            <label>Bank Name</label>
+                                            <InputText @bind-Value="bankInfoForm.BankName" />
+
+                                            <label>Clearing Number</label>
+                                            <InputText @bind-Value="bankInfoForm.ClearingNumber" />
+
+                                            <label>Account Number</label>
+                                            <InputText @bind-Value="bankInfoForm.BankAccountNumber" />
+
+                                            <button type="submit"
+                                                    class="absence-edit-button"
+                                                    disabled="@isSavingBankInfo">
+                                                @(isSavingBankInfo ? "Saving..." : "Save Changes")
+                                            </button>
+
+                                            <button type="button"
+                                                    class="absence-cancel-button"
+                                                    @onclick="CancelEditingBankInfo">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </EditForm>
+                                }
+                            </div>
+                        }
+                    }
+
+                    @if ((isAdministrator || isMyProfilePage)
+                       && employee.BankInfos.Count == 0
+                       && !isCreatingBankInfo)
+                    {
+                        <button type="button"
+                                class="absence-edit-button"
+                                @onclick="StartCreatingBankInfo">
+                            Add Banking Details
+                        </button>
+                    }
+                    
+                    @if (isCreatingBankInfo)
+                    {
+                        <EditForm Model="bankInfoForm"
+                                  OnValidSubmit="CreateBankInfoAsync"
+                                  Context="bankCreateContext">
+                            <div class="absence-form">
+                                <h3>New Banking Details</h3>
+
+                                <label>Account Holder Name</label>
+                                <InputText @bind-Value="bankInfoForm.AccountHolderName" />
+
+                                <label>Account Holder Type</label>
+                                <InputSelect @bind-Value="bankInfoForm.AccountHolderType">
+                                    <option value="@AccountHolderType.Individual">Individual</option>
+                                    <option value="@AccountHolderType.Company">Company</option>
+                                </InputSelect>
+
+                                <label>Bank Name</label>
+                                <InputText @bind-Value="bankInfoForm.BankName" />
+
+                                <label>Clearing Number</label>
+                                <InputText @bind-Value="bankInfoForm.ClearingNumber" />
+
+                                <label>Account Number</label>
+                                <InputText @bind-Value="bankInfoForm.BankAccountNumber" />
+
+                                <button type="submit"
+                                        class="absence-edit-button"
+                                        disabled="@isSubmittingBankInfo">
+                                    @(isSubmittingBankInfo ? "Saving..." : "Create Banking Details")
+                                </button>
+
+                                <button type="button"
+                                        class="absence-cancel-button"
+                                        @onclick="CancelCreatingBankInfo">
+                                    Cancel
+                                </button>
+                            </div>
+                        </EditForm>
+                    }
+                </section>
+
+
+
+
+                    <section>
+                        <h2>Absence History</h2>
+
+                        @if (employee.Absentisms.Count == 0)
+                        {
+                            <p>No absence information registered.</p>
+                        }
+                        else
+                        {
+                            @foreach (var absence in employee.Absentisms.OrderByDescending(a => a.StartTime))
+                            {
+                                <div>
+                                    <p><strong>Type:</strong> @absence.Type</p>
+                                    <p><strong>From:</strong> @absence.StartTime.ToString("g")</p>
+                                    <p><strong>To:</strong> @absence.EndTime.ToString("g")</p>
+
+                                    @if (isAdministrator ||
+                                                                                                    (absence.StartTime > DateTime.Now &&
+                                                                                                    (absence.Type == AbsentismType.Sick ||
+                                                                                                     absence.Type == AbsentismType.CareOfSickChild)))
+                                    {
+                                        <button type="button"
+                                        class="absence-edit-button"
+                                        @onclick="() => StartEditingAbsence(absence)">
+                                            Edit
+                                        </button>
+                                    }
+
+                                    @if (isAdministrator)
+                                    {
+                                        <button type="button"
+                                        class="absence-delete-button"
+                                        disabled="@isDeletingAbsence"
+                                        @onclick="() => ConfirmDeleteAbsence(absence.Id)">
+                                            Delete
+                                        </button>
+
+                                        @if (confirmingDeleteAbsenceId == absence.Id)
+                                        {
+                                            <div class="delete-confirmation">
+                                                <p>Are you sure you want to delete this absence entry?</p>
+
+                                                <button type="button"
+                                                class="absence-confirm-button"
+                                                disabled="@isDeletingAbsence"
+                                                @onclick="() => DeleteAbsenceAsync(absence.Id)">
+                                                    @(isDeletingAbsence ? "Deleting..." : "Confirm Delete")
+                                                </button>
+
+                                                <button type="button"
+                                                class="absence-cancel-button"
+                                                disabled="@isDeletingAbsence"
+                                                @onclick="CancelDeleteAbsence">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        }
+                                    }
+
+                                    @if (editingAbsenceId == absence.Id)
+                                    {
+                                        <EditForm Model="editAbsenceForm"
+                                        OnValidSubmit="UpdateAbsenceAsync"
+                                        Context="absenceEditContext"
+                                        class="absence-form">
+
+                                            <h3>Edit Absence</h3>
+
+                                            <div>
+                                                <label>Absence Type</label>
+                                                <InputSelect @bind-Value="editAbsenceForm.Type">
+                                                    <option value="@AbsentismType.Sick">
+                                                        Sick Leave
+                                                    </option>
+
+                                                    <option value="@AbsentismType.CareOfSickChild">
+                                                        Care of Sick Child (VAB)
+                                                    </option>
+
+                                                    @if (isAdministrator)
+                                                    {
+                                                        <option value="@AbsentismType.Vacation">
+                                                            Vacation
+                                                        </option>
+
+                                                        <option value="@AbsentismType.ParentalLeave">
+                                                            Parental Leave
+                                                        </option>
+                                                    }
+                                                </InputSelect>
+                                            </div>
+
+                                            <div>
+                                                <label>Start Date and Time</label>
+                                                <InputDate @bind-Value="editAbsenceForm.StartTime"
+                                                Type="InputDateType.DateTimeLocal" />
+                                            </div>
+
+                                            <div>
+                                                <label>End Date and Time</label>
+                                                <InputDate @bind-Value="editAbsenceForm.EndTime"
+                                                Type="InputDateType.DateTimeLocal" />
+                                            </div>
+
+                                            <button type="submit"
+                                            class="absence-edit-button"
+                                            disabled="@isUpdatingAbsence">
+                                                @(isUpdatingAbsence ? "Saving..." : "Save Changes")
+                                            </button>
+
+                                            <button type="button"
+                                            class="absence-cancel-button"
+                                            disabled="@isUpdatingAbsence"
+                                            @onclick="CancelEditingAbsence">
+                                                Cancel
+                                            </button>
+                                        </EditForm>
+                                    }
+                                </div>
+                            }
+                        }
+
+                        @if (!string.IsNullOrEmpty(editAbsenceMessage))
+                        {
+                            <p class="success-message">@editAbsenceMessage</p>
+                        }
+
+                        @if (!string.IsNullOrEmpty(editAbsenceErrorMessage))
+                        {
+                            <p class="error-message">@editAbsenceErrorMessage</p>
+                        }
+
+                        <h3>Register Absence</h3>
+
+                        <EditForm Model="absenceForm"
+                        OnValidSubmit="RegisterAbsenceAsync"
+                        Context="editFormContext"
+                        class="absence-form">
+
+                            <div>
+                                <label>Absence Type</label>
+                                <InputSelect @bind-Value="absenceForm.Type">
+                                    <option value="@AbsentismType.Sick">
+                                        Sick Leave
+                                    </option>
+
+                                    <option value="@AbsentismType.CareOfSickChild">
+                                        Care of Sick Child (VAB)
+                                    </option>
+
+                                    @if (isAdministrator)
+                                    {
+                                        <option value="@AbsentismType.Vacation">
+                                            Vacation
+                                        </option>
+
+                                        <option value="@AbsentismType.ParentalLeave">
+                                            Parental Leave
+                                        </option>
+                                    }
+                                </InputSelect>
+                            </div>
+
+                            <div>
+                                <label>Start Date and Time</label>
+                                <InputDate @bind-Value="absenceForm.StartTime"
+                                Type="InputDateType.DateTimeLocal" />
+                            </div>
+
+                            <div>
+                                <label>End Date and Time</label>
+                                <InputDate @bind-Value="absenceForm.EndTime"
+                                Type="InputDateType.DateTimeLocal" />
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(absenceMessage))
+                            {
+                                <p class="success-message">@absenceMessage</p>
+                            }
+                        
+                            @if (!string.IsNullOrEmpty(absenceErrorMessage))
+                            {
+                                <p class="error-message">@absenceErrorMessage</p>
+                            }
+
+                            <button type="submit"
+                            class="absence-edit-button"
+                            disabled="@isSubmittingAbsence">
+                                @(isSubmittingAbsence ? "Registering..." : "Register Absence")
+                            </button>
+                        </EditForm>
+                    </section>
+
+
+
+
+                <section>
+                    <h2>Time Reports</h2>
+
+                    @if (timeReportMessage is not null)
+                    {
+                        <p class="text-success">@timeReportMessage</p>
+                    }
+
+                    @if (timeReportErrorMessage is not null)
+                    {
+                        <p class="text-danger">@timeReportErrorMessage</p>
+                    }
+
+                    @if (isAdministrator || isMyProfilePage)
+                    {
+                        <button class="time-report-button"
+                                @onclick="StartCreatingTimeReport"
+                                disabled="@isSubmittingTimeReport">
+                            Register Time Report
+                        </button>
+                    }
+                    
+                    @if (isCreatingTimeReport)
+                    {
+                        <EditForm Model="timeReportForm"
+                                  OnValidSubmit="CreateTimeReportAsync"
+                                  Context="timeReportCreateContext">
+
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <div class="mb-3">
+                                <label class="form-label">Order Number</label>
+                                <InputNumber class="form-control"
+                                             @bind-Value="timeReportForm.BookingId" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Start Time</label>
+                                <InputDate class="form-control"
+                                           Type="InputDateType.DateTimeLocal"
+                                           @bind-Value="timeReportForm.StartTime" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">End Time</label>
+                                <InputDate class="form-control"
+                                           Type="InputDateType.DateTimeLocal"
+                                           @bind-Value="timeReportForm.EndTime" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Break (minutes)</label>
+                                <InputNumber class="form-control"
+                                             @bind-Value="timeReportForm.BreakMinutes" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <InputTextArea class="form-control"
+                                               @bind-Value="timeReportForm.Description" />
+                            </div>
+
+                            <button type="submit"
+                                    class="	time-report-save-button"
+                                    disabled="@isSubmittingTimeReport">
+                                @(isSubmittingTimeReport ? "Registering..." : "Register Time Report")
+                            </button>
+
+                            <button type="button"
+                                    class="	time-report-cancel-button"
+                                    @onclick="CancelCreatingTimeReport"
+                                    disabled="@isSubmittingTimeReport">
+                                Cancel
+                            </button>
+                        </EditForm>
+                    }
+                    
+                    @if (employee.TimeReports.Count == 0)
+                    {
+                        <p>No time reports registered.</p>
+                    }
+                    else
+                    {
+                        @foreach (var report in employee.TimeReports)
+                        {
+                            <div class="card mb-3 p-3">
+
+                                <p><strong>Order Number:</strong> @report.BookingId</p>
+                                <p><strong>Start:</strong> @report.StartTime.ToString("g")</p>
+                                <p><strong>End:</strong> @report.EndTime.ToString("g")</p>
+                                <p><strong>Break (minutes):</strong> @report.BreakMinutes</p>
+                                <p><strong>Description:</strong> @report.Description</p>
+
+                                @if (isAdministrator || isMyProfilePage)
+                                {
+                                    @if (editingTimeReportId == report.Id)
+                                    {
+                                        <EditForm Model="timeReportForm"
+                                                  OnValidSubmit="UpdateTimeReportAsync"
+                                                  Context="timeReportEditContext">
+
+                                            <DataAnnotationsValidator />
+                                            <ValidationSummary />
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Order Number</label>
+                                                <InputNumber class="form-control"
+                                                             @bind-Value="timeReportForm.BookingId" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Start Time</label>
+                                                <InputDate class="form-control"
+                                                           Type="InputDateType.DateTimeLocal"
+                                                           @bind-Value="timeReportForm.StartTime" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">End Time</label>
+                                                <InputDate class="form-control"
+                                                           Type="InputDateType.DateTimeLocal"
+                                                           @bind-Value="timeReportForm.EndTime" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Break (minutes)</label>
+                                                <InputNumber class="form-control"
+                                                             @bind-Value="timeReportForm.BreakMinutes" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Description</label>
+                                                <InputTextArea class="form-control"
+                                                               @bind-Value="timeReportForm.Description" />
+                                            </div>
+
+                                            <button type="submit"
+                                                    class="	time-report-save-button"
+                                                    disabled="@isUpdatingTimeReport">
+                                                @(isUpdatingTimeReport ? "Saving..." : "Save Changes")
+                                            </button>
+
+                                            <button type="button"
+                                                    class="	time-report-cancel-button"
+                                                    @onclick="CancelEditingTimeReport"
+                                                    disabled="@isUpdatingTimeReport">
+                                                Cancel
+                                            </button>
+                                        </EditForm>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="time-report-button"
+                                                @onclick="() => StartEditingTimeReport(report)">
+                                            Edit
+                                        </button>
+                                    }
+                                }
+
+                                @if (isAdministrator)
+                                {
+                                    <button type="button"
+                                            class="absence-delete-button"
+                                            disabled="@isDeletingTimeReport"
+                                            @onclick="() => ConfirmDeleteTimeReport(report.Id)">
+                                        Delete
+                                    </button>
+
+                                    @if (confirmingDeleteTimeReportId == report.Id)
+                                    {
+                                        <div class="delete-confirmation">
+                                            <p>Are you sure you want to delete this time report?</p>
+
+                                            <button type="button"
+                                                    class="absence-confirm-button"
+                                                    disabled="@isDeletingTimeReport"
+                                                    @onclick="() => DeleteTimeReportAsync(report.Id)">
+                                                @(isDeletingTimeReport ? "Deleting..." : "Confirm Delete")
+                                            </button>
+
+                                            <button type="button"
+                                                    class="absence-cancel-button"
+                                                    disabled="@isDeletingTimeReport"
+                                                    @onclick="CancelDeleteTimeReport">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            
+                        }
+                    }
+                </section>
+                
+                
+                    <section>
+                        <h2>Team and Associated Orders</h2>
+
+                        @if (employee.TeamAssignments.Count == 0)
+                        {
+                            <p>This employee is not currently assigned to any registered team.</p>
+                        }
+                        else
+                        {
+                            @foreach (var assignment in employee.TeamAssignments)
+                            {
+                                <div>
+                                    <p><strong>Team:</strong> @assignment.TeamId</p>
+                                    <p><strong>Order:</strong> @assignment.BookingId</p>
+                                    <p><strong>Customer:</strong> @assignment.CustomerName</p>
+                                    <p><strong>Order Status:</strong> @assignment.BookingStatus</p>
+                                    <p><strong>Order Start:</strong> @assignment.BookingStartTime.ToString("g")</p>
+                                    <p><strong>Order End:</strong> @assignment.BookingEndTime.ToString("g")</p>
+                                </div>
+                            }
+                        }
+                    </section>
+                    }
+
+                    </div>
+                </Authorized>
+
+                <NotAuthorized>
+                    <p>You must be logged in to view employee details.</p>
+                </NotAuthorized>
+                </AuthorizeView>
+
+                @code {
+                [Parameter]
+    public int Id { get; set; }
+
+    private EmployeeDetailsDto? employee;
+
+    private bool isLoading = true;
+    private string? errorMessage;
+    private int? confirmingDeleteAbsenceId;
+    // Contact information editing state.
+            private bool isMyProfilePage;
+    private int? editingContactInfoId;
+    private bool isSavingContactInfo;
+    private bool isCreatingContactInfo;
+    private bool isSubmittingContactInfo;
+    private string? contactInfoMessage;
+    private string? contactInfoErrorMessage;
+
+    private ContactInfoFormModel contactInfoForm = new();
+
+    private class ContactInfoFormModel
+    {
+                public string Address { get; set; } = string.Empty;
+                public string Telephone { get; set; } = string.Empty;
+                public string Email { get; set; } = string.Empty;
+    }
+    // Banking details editing state.
+    private int? editingBankInfoId;
+    private bool isSavingBankInfo;
+    private bool isCreatingBankInfo;
+    private bool isSubmittingBankInfo;
+    private string? bankInfoMessage;
+    private string? bankInfoErrorMessage;
+    
+    private BankInfoFormModel bankInfoForm = new();
+
+    private class BankInfoFormModel
+    {
+        public string AccountHolderName { get; set; } = string.Empty;
+
+        public AccountHolderType AccountHolderType { get; set; }
+            = AccountHolderType.Individual;
+
+        public string BankName { get; set; } = string.Empty;
+
+        public string BankAccountNumber { get; set; } = string.Empty;
+
+        public string ClearingNumber { get; set; } = string.Empty;
+    }
+    private void StartEditingSalary()
+    {
+        if (!isAdministrator)
+        {
+            return;
+        }
+
+        salaryForm = new SalaryFormModel
+        {
+            Amount = 0,
+            ValidFrom = DateTime.Today,
+            ValidTo = null
+        };
+
+        salaryMessage = null;
+        salaryErrorMessage = null;
+        isEditingSalary = true;
+    }
+
+    private void CancelEditingSalary()
+    {
+        isEditingSalary = false;
+        salaryForm = new SalaryFormModel();
+
+        salaryMessage = null;
+        salaryErrorMessage = null;
+    }
+    // Registers a new salary period for the employee.
+    private async Task SaveSalaryAsync()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        salaryErrorMessage = null;
+        salaryMessage = null;
+
+        // Validate salary amount and date range.
+        if (salaryForm.Amount <= 0)
+        {
+            salaryErrorMessage = "Salary amount must be greater than zero.";
+            return;
+        }
+
+        if (salaryForm.ValidTo.HasValue &&
+            salaryForm.ValidTo.Value.Date < salaryForm.ValidFrom.Date)
+        {
+            salaryErrorMessage = "Valid To cannot be earlier than Valid From.";
+            return;
+        }
+
+        isSavingSalary = true;
+
+        try
+        {
+            var request = new CreateSalaryDto
+            {
+                Amount = salaryForm.Amount,
+                ValidFrom = salaryForm.ValidFrom,
+                ValidTo = salaryForm.ValidTo
+            };
+
+            await SalaryApiService.CreateAsync(employee.Id, request);
+
+            // Refresh employee information after successful registration.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            isEditingSalary = false;
+            salaryForm = new SalaryFormModel();
+
+            salaryMessage = "Salary registered successfully.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Conflict)
+        {
+            salaryErrorMessage =
+                "The salary period overlaps with an existing salary period.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            salaryErrorMessage =
+                "You do not have permission to register salary information.";
+        }
+        catch (HttpRequestException)
+        {
+            salaryErrorMessage =
+                "Could not register salary. Please check the API connection.";
+        }
+        catch (Exception)
+        {
+            salaryErrorMessage =
+                "An unexpected error occurred while registering salary.";
+        }
+        finally
+        {
+            isSavingSalary = false;
+        }
+    }
+    
+    // Vacation days editing state.
+    private bool isEditingVacationDays;
+    private bool isSavingVacationDays;
+    private string? vacationDaysMessage;
+    private string? vacationDaysErrorMessage;
+    
+    private VacationDaysFormModel vacationDaysForm = new();
+
+    private class VacationDaysFormModel
+    {
+        public int VacationDays { get; set; }
+    }
+    
+    // Employee status editing state.
+    private bool isEditingEmployeeStatus;
+    private bool isSavingEmployeeStatus;
+    private string? employeeStatusMessage;
+    private string? employeeStatusErrorMessage;
+
+    private EmployeeStatusFormModel employeeStatusForm = new();
+
+    private class EmployeeStatusFormModel
+    {
+        public bool IsActive { get; set; }
+    }
+
+    // Starts editing the employee's vacation days.
+    private void StartEditingVacationDays()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isEditingVacationDays = true;
+
+        vacationDaysForm = new VacationDaysFormModel
+        {
+            VacationDays = employee.VacationDays
+        };
+
+        vacationDaysMessage = null;
+        vacationDaysErrorMessage = null;
+    }
+
+    // Cancels editing vacation days.
+    private void CancelEditingVacationDays()
+    {
+        isEditingVacationDays = false;
+        vacationDaysForm = new VacationDaysFormModel();
+
+        vacationDaysMessage = null;
+        vacationDaysErrorMessage = null;
+    }
+
+    // Saves the updated vacation days.
+    private async Task SaveVacationDaysAsync()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isSavingVacationDays = true;
+        vacationDaysMessage = null;
+        vacationDaysErrorMessage = null;
+
+        try
+        {
+            var request = new UpdateVacationDaysDto
+            {
+                VacationDays = vacationDaysForm.VacationDays
+            };
+
+            await EmployeeApiService.UpdateVacationDaysAsync(
+                employee.Id,
+                request);
+
+            // Refresh employee information after successful update.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            isEditingVacationDays = false;
+            vacationDaysForm = new VacationDaysFormModel();
+
+            vacationDaysMessage = "Vacation days updated successfully.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            vacationDaysErrorMessage =
+                "You do not have permission to update vacation days.";
+        }
+        catch (HttpRequestException)
+        {
+            vacationDaysErrorMessage =
+                "Could not update vacation days. Please check the API connection.";
+        }
+        
+        catch (Exception)
+        {
+            vacationDaysErrorMessage =
+                "An unexpected error occurred while updating vacation days.";
+        }
+        finally
+        {
+            isSavingVacationDays = false;
+        }
+    }
+    private bool isEditingSalary;
+    private bool isSavingSalary;
+    private string? salaryMessage;
+    private string? salaryErrorMessage;
+
+    private SalaryFormModel salaryForm = new();
+
+    private class SalaryFormModel
+    {
+        public decimal Amount { get; set; }
+        public DateTime ValidFrom { get; set; } = DateTime.Today;
+        public DateTime? ValidTo { get; set; }
+    }
+    // Starts editing the employee's active status.
+    private void StartEditingEmployeeStatus()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isEditingEmployeeStatus = true;
+
+        employeeStatusForm = new EmployeeStatusFormModel
+        {
+            IsActive = employee.IsActive
+        };
+
+        employeeStatusMessage = null;
+        employeeStatusErrorMessage = null;
+    }
+
+    // Cancels editing the employee's status.
+    private void CancelEditingEmployeeStatus()
+    {
+        isEditingEmployeeStatus = false;
+        employeeStatusForm = new EmployeeStatusFormModel();
+
+        employeeStatusMessage = null;
+        employeeStatusErrorMessage = null;
+    }
+
+    // Saves the updated employee status.
+    private async Task SaveEmployeeStatusAsync()
+    {
+        if (!isAdministrator || employee == null)
+        {
+            return;
+        }
+
+        isSavingEmployeeStatus = true;
+        employeeStatusMessage = null;
+        employeeStatusErrorMessage = null;
+
+        try
+        {
+            var request = new UpdateEmployeeStatusDto
+            {
+                IsActive = employeeStatusForm.IsActive
+            };
+
+            await EmployeeApiService.UpdateEmployeeStatusAsync(
+                employee.Id,
+                request);
+
+            // Refresh employee information after successful update.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            isEditingEmployeeStatus = false;
+            employeeStatusForm = new EmployeeStatusFormModel();
+
+            employeeStatusMessage = "Employee status updated successfully.";
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            employeeStatusErrorMessage =
+                "You do not have permission to update employee status.";
+        }
+        catch (HttpRequestException)
+        {
+            employeeStatusErrorMessage =
+                "Could not update employee status. Please check the API connection.";
+        }
+        catch (Exception)
+        {
+            employeeStatusErrorMessage =
+                "An unexpected error occurred while updating employee status.";
+        }
+        finally
+        {
+            isSavingEmployeeStatus = false;
+        }
+    }
+
+    // Fetches detailed information about the selected employee.
+    protected override async Task OnParametersSetAsync()
+    {
+                isMyProfilePage = NavigationManager.ToBaseRelativePath(
+    NavigationManager.Uri).Equals(
+                "my-profile",
+                StringComparison.OrdinalIgnoreCase);
+                isLoading = true;
+                errorMessage = null;
+                employee = null;
+
+                try
+                {
+                    var authState = await AuthenticationStateProvider
+                        .GetAuthenticationStateAsync();
+
+                    isAdministrator = authState.User.IsInRole("Administrator");
+
+                    // Fetches the selected employee or the currently logged-in employee.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    if (employee == null)
+                    {
+                        errorMessage = "The employee could not be found.";
+                    }
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    errorMessage = "You do not have permission to view these employee details.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    errorMessage = "The employee could not be found.";
+                }
+                catch (HttpRequestException)
+                {
+                    errorMessage = "Could not reach the server. Please check the API connection.";
+                }
+                catch (Exception)
+                {
+                    errorMessage = "An unexpected error occurred while fetching employee details.";
+                }
+                finally
+                {
+                    isLoading = false;
+                }
+    }
+    private bool isAdministrator;
+    
+    // Time report editing state.
+    private int? editingTimeReportId;
+    private bool isSubmittingTimeReport;
+    private bool isUpdatingTimeReport;
+    private bool isCreatingTimeReport;
+    private bool isDeletingTimeReport;
+    private int? confirmingDeleteTimeReportId;
+    private string? timeReportMessage;
+    private string? timeReportErrorMessage;
+    
+    private TimeReportFormModel timeReportForm = new();
+
+    private class TimeReportFormModel
+    {
+        public int BookingId { get; set; }
+
+        public DateTime StartTime { get; set; } = DateTime.Now;
+
+        public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
+
+        public int BreakMinutes { get; set; }
+
+        public string Description { get; set; } = string.Empty;
+    }
+
+    private bool isSubmittingAbsence;
+    private string? absenceMessage;
+    private string? absenceErrorMessage;
+
+    private AbsenceFormModel absenceForm = new();
+    private int? editingAbsenceId;
+    private bool isUpdatingAbsence;
+    private bool isDeletingAbsence;
+
+    private string? editAbsenceMessage;
+    private string? editAbsenceErrorMessage;
+
+    private AbsenceFormModel editAbsenceForm = new();
+    private class AbsenceFormModel
+    {
+                public DateTime StartTime { get; set; } = DateTime.Now;
+
+                public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
+
+                public AbsentismType Type { get; set; } = AbsentismType.Sick;
+    }
+    private async Task RegisterAbsenceAsync()
+    {
+                isSubmittingAbsence = true;
+                absenceMessage = null;
+                absenceErrorMessage = null;
+
+                try
+                {
+                    var request = new CreateAbsentismDto
+            {
+                StartTime = absenceForm.StartTime,
+                EndTime = absenceForm.EndTime,
+                Type = absenceForm.Type
+            };
+
+                    if (isAdministrator)
+                    {
+                        await AbsentismApiService.CreateForEmployeeAsync(employee.Id, request);
+                    }
+                    else
+                    {
+                        await AbsentismApiService.CreateAsync(request);
+                    }
+
+                    // Refresh employee information after successful registration.
+                    employee = Id > 0
+    ? await EmployeeApiService.GetDetailsAsync(Id)
+    : await EmployeeApiService.GetMyDetailsAsync();
+
+                    absenceMessage = "Absence registered successfully.";
+
+                    absenceForm = new AbsenceFormModel
+            {
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddHours(1),
+                Type = AbsentismType.Sick
+            };
+                }
+                catch (HttpRequestException ex)
+                {
+                    absenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                        ? "Could not register absence."
+                        : ex.Message;
+                }
+                catch (Exception)
+                {
+                    absenceErrorMessage = "An unexpected error occurred.";
+                }
+                finally
+                {
+                    isSubmittingAbsence = false;
+                }
+    }
+
+    // Starts editing an existing absence entry.
+    private void StartEditingAbsence(
+    NPJL.Application.DTOs.Employees.AbsentismDto absence)
+    {
+                editingAbsenceId = absence.Id;
+
+                editAbsenceForm = new AbsenceFormModel
+        {
+            StartTime = absence.StartTime,
+            EndTime = absence.EndTime,
+            Type = absence.Type
+        };
+
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
+    }
+
+    // Cancels the current absence editing operation.
+    private void CancelEditingAbsence()
+    {
+                editingAbsenceId = null;
+                editAbsenceForm = new AbsenceFormModel();
+
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
+    }
+
+    // Updates an existing absence entry.
+    private async Task UpdateAbsenceAsync()
+    {
+                if (editingAbsenceId == null)
+                {
+                    return;
+                }
+
+                isUpdatingAbsence = true;
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
+
+                try
+                {
+                    var request = new UpdateAbsentismDto
+            {
+                StartTime = editAbsenceForm.StartTime,
+                EndTime = editAbsenceForm.EndTime,
+                Type = editAbsenceForm.Type
+            };
+
+                    await AbsentismApiService.UpdateAsync(
+                        editingAbsenceId.Value,
+                        request);
+
+                    // Refresh employee information after successful update.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    editingAbsenceId = null;
+
+                    editAbsenceMessage = "Absence updated successfully.";
+                }
+                catch (HttpRequestException ex)
+                {
+                    editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                        ? "Could not update absence."
+                        : ex.Message;
+                }
+                catch (Exception)
+                {
+                    editAbsenceErrorMessage = "An unexpected error occurred.";
+                }
+                finally
+                {
+                    isUpdatingAbsence = false;
+                }
+    }
+
+    // Deletes an existing absence entry.
+    private async Task DeleteAbsenceAsync(int absenceId)
+    {
+                if (!isAdministrator)
+                {
+                    return;
+                }
+
+                isDeletingAbsence = true;
+                editAbsenceMessage = null;
+                editAbsenceErrorMessage = null;
+
+                try
+                {
+                    await AbsentismApiService.DeleteAsync(absenceId);
+
+                    // Refresh employee information after successful deletion.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    if (editingAbsenceId == absenceId)
+                    {
+                        editingAbsenceId = null;
+                    }
+                    confirmingDeleteAbsenceId = null;
+                    editAbsenceMessage = "Absence deleted successfully.";
+                }
+                catch (HttpRequestException ex)
+                {
+                    editAbsenceErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                        ? "Could not delete absence."
+                        : ex.Message;
+                }
+                catch (Exception)
+                {
+                    editAbsenceErrorMessage = "An unexpected error occurred.";
+                }
+                finally
+                {
+                    isDeletingAbsence = false;
+                }
+    }
+
+    // Requests confirmation before deleting an absence entry.
+    private void ConfirmDeleteAbsence(int absenceId)
+    {
+                confirmingDeleteAbsenceId = absenceId;
+    }
+
+    // Cancels the pending deletion.
+    private void CancelDeleteAbsence()
+    {
+                confirmingDeleteAbsenceId = null;
+    }
+    // Starts a new time report.
+    private void StartCreatingTimeReport()
+    {
+        editingTimeReportId = null;
+        isCreatingTimeReport = true;
+        timeReportForm = new TimeReportFormModel();
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+
+    // Cancels time report creation.
+    private void CancelCreatingTimeReport()
+    {
+        isCreatingTimeReport = false;
+        timeReportForm = new TimeReportFormModel();
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+
+    // Loads an existing time report into the edit form.
+    private void StartEditingTimeReport(TimeReportDto report)
+    {
+        if (!isAdministrator && !isMyProfilePage)
+            return;
+
+        editingTimeReportId = report.Id;
+
+        timeReportForm = new TimeReportFormModel
+        {
+            BookingId = report.BookingId,
+            StartTime = report.StartTime,
+            EndTime = report.EndTime,
+            BreakMinutes = report.BreakMinutes,
+            Description = report.Description
+        };
+
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+
+    // Cancels editing.
+    private void CancelEditingTimeReport()
+    {
+
+        editingTimeReportId = null;
+        timeReportForm = new TimeReportFormModel();
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+    }
+    // Requests confirmation before deleting a time report.
+    private void ConfirmDeleteTimeReport(int timeReportId)
+    {
+        if (!isAdministrator)
+        {
+            return;
+        }
+
+        confirmingDeleteTimeReportId = timeReportId;
+    }
+
+    // Cancels the pending deletion.
+    private void CancelDeleteTimeReport()
+    {
+        confirmingDeleteTimeReportId = null;
+    }
+
+    // Deletes an existing time report.
+    private async Task DeleteTimeReportAsync(int timeReportId)
+    {
+        if (!isAdministrator)
+        {
+            return;
+        }
+
+        isDeletingTimeReport = true;
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+
+        try
+        {
+            await TimeReportApiService.DeleteAsync(timeReportId);
+
+            // Refresh employee information after successful deletion.
+            employee = Id > 0
+                ? await EmployeeApiService.GetDetailsAsync(Id)
+                : await EmployeeApiService.GetMyDetailsAsync();
+
+            if (editingTimeReportId == timeReportId)
+            {
+                editingTimeReportId = null;
+            }
+
+            confirmingDeleteTimeReportId = null;
+            timeReportMessage = "Time report deleted successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            timeReportErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Could not delete time report."
+                : ex.Message;
+        }
+        catch (Exception)
+        {
+            timeReportErrorMessage =
+                "An unexpected error occurred while deleting the time report.";
+        }
+        finally
+        {
+            isDeletingTimeReport = false;
+        }
+    }
+
+    // Creates a time report.
+    private async Task CreateTimeReportAsync()
+    {
+        if (employee == null || (!isAdministrator && !isMyProfilePage))
+            return;
+
+        isSubmittingTimeReport = true;
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+
+        try
+        {
+            var request = new CreateTimeReportDto
+            {
+                BookingId = timeReportForm.BookingId,
+                StartTime = timeReportForm.StartTime,
+                EndTime = timeReportForm.EndTime,
+                BreakMinutes = timeReportForm.BreakMinutes,
+                Description = timeReportForm.Description
+            };
+
+            if (isAdministrator)
+            {
+                await TimeReportApiService.CreateForEmployeeAsync(employee.Id, request);
+            }
+            else
+            {
+                await TimeReportApiService.CreateAsync(request);
+            }
+
+            employee = Id > 0
+    ? await EmployeeApiService.GetDetailsAsync(Id)
+    : await EmployeeApiService.GetMyDetailsAsync();
+
+            isCreatingTimeReport = false;
+            timeReportForm = new TimeReportFormModel();
+            timeReportMessage = "Time report registered successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            timeReportErrorMessage = ex.Message;
+        }
+        catch (Exception)
+        {
+            timeReportErrorMessage = "An unexpected error occurred while registering the time report.";
+        }
+        finally
+        {
+            isSubmittingTimeReport = false;
+        }
+    }
+
+    // Updates an existing time report.
+    private async Task UpdateTimeReportAsync()
+    {
+        if (employee == null ||
+            editingTimeReportId == null ||
+            (!isAdministrator && !isMyProfilePage))
+        {
+            return;
+        }
+
+        isUpdatingTimeReport = true;
+        timeReportMessage = null;
+        timeReportErrorMessage = null;
+
+        try
+        {
+            var request = new UpdateTimeReportDto
+            {
+                BookingId = timeReportForm.BookingId,
+                StartTime = timeReportForm.StartTime,
+                EndTime = timeReportForm.EndTime,
+                BreakMinutes = timeReportForm.BreakMinutes,
+                Description = timeReportForm.Description
+            };
+            
+            await TimeReportApiService.UpdateAsync(editingTimeReportId.Value, request);
+
+            employee = Id > 0
+    ? await EmployeeApiService.GetDetailsAsync(Id)
+    : await EmployeeApiService.GetMyDetailsAsync();     
+
+            editingTimeReportId = null;
+            timeReportForm = new TimeReportFormModel();
+            timeReportMessage = "Time report updated successfully.";
+        }
+        catch (HttpRequestException ex)
+        {
+            timeReportErrorMessage = ex.Message;
+        }
+        catch (Exception)
+        {
+            timeReportErrorMessage = "An unexpected error occurred while updating the time report.";
+        }
+        finally
+        {
+            isUpdatingTimeReport = false;
+        }
+    }
+    // Starts editing an existing contact information entry.
+    private void StartEditingContactInfo(ContactInfoDto contact)
+    {
+                editingContactInfoId = contact.Id;
+
+                contactInfoForm = new ContactInfoFormModel
+        {
+            Address = contact.Address,
+            Telephone = contact.Telephone,
+            Email = contact.Email
+        };
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Cancels the current contact information editing operation.
+    private void CancelEditingContactInfo()
+    {
+                editingContactInfoId = null;
+                contactInfoForm = new ContactInfoFormModel();
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Saves changes to existing contact information.
+    private async Task SaveContactInfoAsync()
+    {
+                if (editingContactInfoId == null || employee == null)
+                {
+                    return;
+                }
+
+                isSavingContactInfo = true;
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+
+                try
+                {
+                    var request = new UpdateContactInfoDto
+            {
+                Address = contactInfoForm.Address,
+                Telephone = contactInfoForm.Telephone,
+                Email = contactInfoForm.Email
+            };
+
+                    var updated = await ContactInfoApiService.UpdateAsync(
+                        employee.Id,
+                        editingContactInfoId.Value,
+                        request);
+
+                    if (!updated)
+                    {
+                        contactInfoErrorMessage =
+                            "The contact information could not be found.";
+                        return;
+                    }
+
+                    // Refresh employee information after successful update.
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    editingContactInfoId = null;
+                    contactInfoMessage = "Contact information updated successfully.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    contactInfoErrorMessage =
+                        "You do not have permission to update this contact information.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    contactInfoErrorMessage =
+                        "The contact information could not be found.";
+                }
+                catch (HttpRequestException)
+                {
+                    contactInfoErrorMessage =
+                        "Could not reach the server. Please check the API connection.";
+                }
+                catch (Exception)
+                {
+                    contactInfoErrorMessage =
+                        "An unexpected error occurred while updating contact information.";
+                }
+                finally
+                {
+                    isSavingContactInfo = false;
+                }
+    }
+    // Starts creating new contact information.
+    private void StartCreatingContactInfo()
+    {
+                isCreatingContactInfo = true;
+                editingContactInfoId = null;
+                contactInfoForm = new ContactInfoFormModel();
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Cancels creating new contact information.
+    private void CancelCreatingContactInfo()
+    {
+                isCreatingContactInfo = false;
+                contactInfoForm = new ContactInfoFormModel();
+
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+    }
+
+    // Creates new contact information for the employee.
+    private async Task CreateContactInfoAsync()
+    {
+                if (employee == null)
+                {
+                    return;
+                }
+
+                if (!isAdministrator && !isMyProfilePage)
+                {
+                    return;
+                }
+
+                isSubmittingContactInfo = true;
+                contactInfoMessage = null;
+                contactInfoErrorMessage = null;
+
+                try
+                {
+                    var request = new CreateContactInfoDto
+            {
+                Address = contactInfoForm.Address,
+                Telephone = contactInfoForm.Telephone,
+                Email = contactInfoForm.Email
+            };
+
+                    await ContactInfoApiService.CreateAsync(employee.Id, request);
+
+                    employee = Id > 0
+                        ? await EmployeeApiService.GetDetailsAsync(Id)
+                        : await EmployeeApiService.GetMyDetailsAsync();
+
+                    isCreatingContactInfo = false;
+                    contactInfoForm = new ContactInfoFormModel();
+
+                    contactInfoMessage = "Contact information created successfully.";
+                }
+                catch (HttpRequestException ex)
+                    when (ex.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    contactInfoErrorMessage =
+                        "You do not have permission to create contact information.";
+                }
+                catch (HttpRequestException)
+                {
+                    contactInfoErrorMessage =
+                        "Could not create contact information. Please check the API connection.";
+                }
+                catch (Exception)
+                {
+                    contactInfoErrorMessage =
+                        "An unexpected error occurred while creating contact information.";
+                }
+                finally
+                {
+                    isSubmittingContactInfo = false;
+                }
+                }
+                // Starts editing an existing banking details entry.
+private void StartEditingBankInfo(BankInfoDto bank)
+{
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    editingBankInfoId = bank.Id;
+
+    Enum.TryParse<AccountHolderType>(
+        bank.AccountHolderType,
+        out var accountHolderType);
+
+    bankInfoForm = new BankInfoFormModel
+    {
+        AccountHolderName = bank.AccountHolderName,
+        AccountHolderType = accountHolderType,
+        BankName = bank.BankName,
+        BankAccountNumber = bank.BankAccountNumber,
+        ClearingNumber = bank.ClearingNumber
+    };
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+
+// Cancels the current banking details editing operation.
+private void CancelEditingBankInfo()
+{
+    editingBankInfoId = null;
+    bankInfoForm = new BankInfoFormModel();
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+
+// Saves changes to existing banking details.
+private async Task SaveBankInfoAsync()
+{
+    if (editingBankInfoId == null || employee == null)
+    {
+        return;
+    }
+
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    isSavingBankInfo = true;
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+
+    try
+    {
+        var request = new UpdateBankInfoDto
+        {
+            AccountHolderName = bankInfoForm.AccountHolderName,
+            AccountHolderType = bankInfoForm.AccountHolderType,
+            BankName = bankInfoForm.BankName,
+            BankAccountNumber = bankInfoForm.BankAccountNumber,
+            ClearingNumber = bankInfoForm.ClearingNumber
+        };
+
+        var updated = await BankInfoApiService.UpdateAsync(
+            employee.Id,
+            editingBankInfoId.Value,
+            request);
+
+        if (!updated)
+        {
+            bankInfoErrorMessage =
+                "The banking details could not be found.";
+            return;
+        }
+
+        employee = Id > 0
+            ? await EmployeeApiService.GetDetailsAsync(Id)
+            : await EmployeeApiService.GetMyDetailsAsync();
+
+        editingBankInfoId = null;
+        bankInfoMessage = "Banking details updated successfully.";
+    }
+    catch (HttpRequestException ex)
+        when (ex.StatusCode == HttpStatusCode.Forbidden)
+    {
+        bankInfoErrorMessage =
+            "You do not have permission to update these banking details.";
+    }
+    catch (HttpRequestException ex)
+        when (ex.StatusCode == HttpStatusCode.NotFound)
+    {
+        bankInfoErrorMessage =
+            "The banking details could not be found.";
+    }
+    catch (HttpRequestException)
+    {
+        bankInfoErrorMessage =
+            "Could not reach the server. Please check the API connection.";
+    }
+    catch (Exception)
+    {
+        bankInfoErrorMessage =
+            "An unexpected error occurred while updating banking details.";
+    }
+    finally
+    {
+        isSavingBankInfo = false;
+    }
+}
+
+// Starts creating new banking details.
+private void StartCreatingBankInfo()
+{
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    isCreatingBankInfo = true;
+    editingBankInfoId = null;
+    bankInfoForm = new BankInfoFormModel();
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+
+// Cancels creating new banking details.
+private void CancelCreatingBankInfo()
+{
+    isCreatingBankInfo = false;
+    bankInfoForm = new BankInfoFormModel();
+
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+}
+    
+// Creates new banking details for the employee.
+private async Task CreateBankInfoAsync()
+{
+    if (employee == null)
+    {
+        return;
+    }
+
+    if (!isAdministrator && !isMyProfilePage)
+    {
+        return;
+    }
+
+    isSubmittingBankInfo = true;
+    bankInfoMessage = null;
+    bankInfoErrorMessage = null;
+
+    try
+    {
+        var request = new CreateBankInfoDto
+        {
+            AccountHolderName = bankInfoForm.AccountHolderName,
+            AccountHolderType = bankInfoForm.AccountHolderType,
+            BankName = bankInfoForm.BankName,
+            BankAccountNumber = bankInfoForm.BankAccountNumber,
+            ClearingNumber = bankInfoForm.ClearingNumber
+        };
+
+        await BankInfoApiService.CreateAsync(employee.Id, request);
+
+        employee = Id > 0
+            ? await EmployeeApiService.GetDetailsAsync(Id)
+            : await EmployeeApiService.GetMyDetailsAsync();
+
+        isCreatingBankInfo = false;
+        bankInfoForm = new BankInfoFormModel();
+
+        bankInfoMessage = "Banking details created successfully.";
+    }
+    catch (HttpRequestException ex)
+        when (ex.StatusCode == HttpStatusCode.Forbidden)
+    {
+        bankInfoErrorMessage =
+            "You do not have permission to create banking details.";
+    }
+    catch (HttpRequestException)
+    {
+        bankInfoErrorMessage =
+            "Could not create banking details. Please check the API connection.";
+    }
+    catch (Exception)
+    {
+        bankInfoErrorMessage =
+            "An unexpected error occurred while creating banking details.";
+    }
+    finally
+    {
+        isSubmittingBankInfo = false;
+    }
+    }
+    
+    
+                }
+
+          
+
+
+            
+

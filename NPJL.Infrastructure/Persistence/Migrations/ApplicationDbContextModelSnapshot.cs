@@ -605,6 +605,42 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                     b.ToTable("PaymentDetails", (string)null);
                 });
 
+            modelBuilder.Entity("NPJL.Domain.Entities.Salary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("ValidTo")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("Salaries", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Salaries_Amount", "[Amount] > 0");
+
+                            t.HasCheckConstraint("CK_Salaries_ValidTo", "[ValidTo] IS NULL OR [ValidTo] >= [ValidFrom]");
+                        });
+                });
+
             modelBuilder.Entity("NPJL.Domain.Entities.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -781,7 +817,7 @@ namespace NPJL.Infrastructure.Persistence.Migrations
 
                     b.ToTable("AspNetUsers", null, t =>
                         {
-                            t.HasCheckConstraint("CK_AspNetUsers_ExactlyOneOwner", "(\r\n    [CustomerId] IS NOT NULL\r\n    AND [EmployeeId] IS NULL\r\n)\r\nOR\r\n(\r\n    [CustomerId] IS NULL\r\n    AND [EmployeeId] IS NOT NULL\r\n)");
+                            t.HasCheckConstraint("CK_AspNetUsers_ExactlyOneOwner", "(\r\n    [CustomerId] IS NOT NULL\r\n    AND [EmployeeId] IS NULL\r\n)\r\nOR\r\n(\r\n    [CustomerId] IS NULL\r\n    AND [EmployeeId] IS NOT NULL\r\n)\r\nOR\r\n(\r\n    [CustomerId] IS NULL\r\n    AND [EmployeeId] IS NULL\r\n)");
                         });
                 });
 
@@ -1006,6 +1042,17 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("NPJL.Domain.Entities.Salary", b =>
+                {
+                    b.HasOne("NPJL.Domain.Entities.Employee", "Employee")
+                        .WithMany("Salaries")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("NPJL.Domain.Entities.TeamEmployee", b =>
                 {
                     b.HasOne("NPJL.Domain.Entities.Employee", "Employee")
@@ -1092,6 +1139,8 @@ namespace NPJL.Infrastructure.Persistence.Migrations
                     b.Navigation("ContactInfos");
 
                     b.Navigation("Employments");
+
+                    b.Navigation("Salaries");
 
                     b.Navigation("TeamEmployees");
 

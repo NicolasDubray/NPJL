@@ -12,23 +12,29 @@ namespace NPJL.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<ApplicationUser> builder)
         {
+            
             // En användare måste vara kopplad till antingen
-            // en kund eller en anställd.
+            // en kund, en anställd eller vara ett fristående administratörskonto.
             builder.ToTable("AspNetUsers", table =>
             {
                 table.HasCheckConstraint(
                     "CK_AspNetUsers_ExactlyOneOwner",
                     """
-                    (
-                        [CustomerId] IS NOT NULL
-                        AND [EmployeeId] IS NULL
-                    )
-                    OR
-                    (
-                        [CustomerId] IS NULL
-                        AND [EmployeeId] IS NOT NULL
-                    )
-                    """);
+        (
+            [CustomerId] IS NOT NULL
+            AND [EmployeeId] IS NULL
+        )
+        OR
+        (
+            [CustomerId] IS NULL
+            AND [EmployeeId] IS NOT NULL
+        )
+        OR
+        (
+            [CustomerId] IS NULL
+            AND [EmployeeId] IS NULL
+        )
+        """);
             });
 
             // Ett kundkonto per kund

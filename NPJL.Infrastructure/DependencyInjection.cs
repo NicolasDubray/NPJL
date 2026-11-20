@@ -13,7 +13,6 @@ namespace NPJL.Infrastructure
 {
     public static class DependencyInjection
     {
-
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services,
             IConfiguration configuration)
@@ -37,22 +36,31 @@ namespace NPJL.Infrastructure
             })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
+
             // Registrerar repositories
             services.AddScoped<ICustomerRepository, CustomerRepository>();
-            services.AddScoped<IBookingRepository, BookingRepository>();
-            services.AddScoped<IInvoiceRepository, InvoiceRepository>();
-            services.AddScoped<IPaymentDetailsRepository, PaymentDetailsRepository>();
-            services.AddScoped<ICustomerRequestRepository, CustomerRequestRepository>();
+            services.AddScoped<ISalaryRepository, SalaryRepository>();
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<IAbsentismRepository, AbsentismRepository>();
+            services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
+            services.AddScoped<IBankInfoRepository, BankInfoRepository>();
+            services.AddScoped<ITimeReportRepository, TimeReportRepository>();
+
             // Registrerar services
             services.AddScoped<NPJL.Application.Services.CustomerService>();
-            services.AddScoped<NPJL.Application.Services.BookingService>();
-            services.AddScoped<NPJL.Application.Services.InvoiceService>();
-            services.AddScoped<NPJL.Application.Services.PaymentDetailsService>();
-            services.AddScoped<NPJL.Application.Services.CustomerRequestService>();
+            services.AddScoped<SalaryService>();
+            services.AddScoped<NPJL.Application.Services.EmployeeService>();
+            services.AddScoped<NPJL.Application.Services.ContactInfoService>();
+            services.AddScoped<NPJL.Application.Services.AbsentismService>();
+            services.AddScoped<NPJL.Application.Services.BankInfoService>();
+            services.AddScoped<ITimeReportService, NPJL.Application.Services.TimeReportService>();
+
+
 
             // Registrerar kundregistreringstjänsten
             services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
             services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
+            services.AddScoped<IEmployeeRegistrationService, EmployeeRegistrationService>();
 
             return services;
         }

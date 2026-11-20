@@ -11,7 +11,9 @@ namespace NPJL.Application.Interfaces
         {
             // Hämtar samtliga frånvaroposter för en anställd.
             Task<IReadOnlyList<Absentism>> GetByEmployeeIdAsync(int employeeId);
-        
+        // Sparar ändringar i databasen.
+        Task SaveChangesAsync();
+
         Task<IReadOnlyList<Absentism>> GetByDateRangeAsync(
             int employeeId,
             DateTime startDate,

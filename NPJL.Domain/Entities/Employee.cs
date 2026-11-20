@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 
 
-
 namespace NPJL.Domain.Entities
 {
     public class Employee
@@ -38,7 +37,9 @@ namespace NPJL.Domain.Entities
 
         public ICollection<TeamEmployee> TeamEmployees { get; set; }
             = new List<TeamEmployee>();
+
+        // Löneuppgifter
+        public ICollection<Salary> Salaries { get; set; }
+            = new List<Salary>();
     }
 }
-
-

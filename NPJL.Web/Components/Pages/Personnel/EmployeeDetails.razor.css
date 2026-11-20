@@ -1,0 +1,248 @@
+﻿
+/* Huvudlayout */
+.personnel-page {
+    width: 100%;
+    padding: 30px 7%;
+    color: #222;
+}
+
+/* Sidhuvud */
+.page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #AEAEAE;
+}
+
+    .page-heading h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .page-heading p {
+        margin: 6px 0 0;
+        color: #666;
+    }
+
+/* Informationssektioner */
+.personnel-page section {
+    margin-bottom: 22px;
+    padding: 20px 24px;
+    background-color: #DCDCDC;
+    border-radius: 5px;
+}
+
+    .personnel-page section h2 {
+        margin: 0 0 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #AEAEAE;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .personnel-page section p {
+        margin: 8px 0;
+        line-height: 1.5;
+    }
+
+    /* Separata poster i historiklistor */
+    .personnel-page section div + div {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid #AEAEAE;
+    }
+
+/* Meddelanden */
+.error-message {
+    padding: 15px 20px;
+    background-color: #C5C5C5;
+    border-radius: 5px;
+    color: #8B2020;
+}
+
+/* Absence history actions */
+.personnel-page .absence-edit-button,
+.personnel-page .absence-delete-button,
+.personnel-page .absence-confirm-button,
+.personnel-page .absence-cancel-button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Edit button */
+.personnel-page .absence-edit-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .absence-edit-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.04);
+    }
+
+/* Delete button */
+.personnel-page .absence-delete-button {
+    background-color: #D0A9A9;
+    color: #542323;
+}
+
+    .personnel-page .absence-delete-button:hover {
+        background-color: #C58F8F;
+        transform: scale(1.04);
+    }
+
+/* Confirm deletion button */
+.personnel-page .absence-confirm-button {
+    background-color: #B86B6B;
+    color: #FFFFFF;
+}
+
+    .personnel-page .absence-confirm-button:hover {
+        background-color: #A65353;
+    }
+
+/* Cancel button */
+.personnel-page .absence-cancel-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .absence-cancel-button:hover {
+        background-color: #AEAEAE;
+    }
+
+/* Disabled buttons */
+.personnel-page button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Delete confirmation panel */
+.personnel-page .delete-confirmation {
+    margin-top: 12px;
+    padding: 15px 18px;
+    background-color: #E5D5D5;
+    border: 1px solid #C58F8F;
+    border-radius: 5px;
+}
+
+    .personnel-page .delete-confirmation p {
+        margin: 0 0 12px;
+        font-weight: 600;
+    }
+
+/* Absence forms */
+.personnel-page .absence-form {
+    margin-top: 18px;
+}
+
+    .personnel-page .absence-form label {
+        display: block;
+        margin-bottom: 7px;
+        color: #222;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .personnel-page .absence-form input,
+    .personnel-page .absence-form select {
+        display: block;
+        width: 100%;
+        max-width: 360px;
+        min-height: 42px;
+        padding: 9px 12px;
+        background-color: #C5C5C5;
+        color: #222;
+        border: 1px solid #AEAEAE;
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .personnel-page .absence-form input:focus,
+        .personnel-page .absence-form select:focus {
+            background-color: #D0D0D0;
+            border-color: #777;
+            box-shadow: 0 0 0 2px rgba(119, 119, 119, 0.15);
+        }
+
+        .personnel-page .absence-form input[type="datetime-local"] {
+            color-scheme: light;
+        }
+
+    .personnel-page .absence-form > div {
+        margin-bottom: 16px;
+    }
+/* Time Report actions */
+.personnel-page .time-report-button,
+.personnel-page .time-report-save-button,
+.personnel-page .time-report-cancel-button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Register and edit buttons */
+.personnel-page .time-report-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .time-report-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.04);
+    }
+
+/* Save buttons */
+.personnel-page .time-report-save-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .time-report-save-button:hover {
+        background-color: #AEAEAE;
+        transform: scale(1.04);
+    }
+
+/* Cancel buttons */
+.personnel-page .time-report-cancel-button {
+    background-color: #C5C5C5;
+    color: #222;
+}
+
+    .personnel-page .time-report-cancel-button:hover {
+        background-color: #AEAEAE;
+    }
+/* Mobilanpassning */
+@media (max-width: 768px) {
+    .personnel-page {
+        padding: 20px 12px;
+    }
+
+    .page-heading h1 {
+        font-size: 24px;
+    }
+
+    .personnel-page section {
+        padding: 16px;
+    }
+
+        .personnel-page section h2 {
+            font-size: 18px;
+        }
+}
