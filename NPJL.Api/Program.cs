@@ -10,6 +10,7 @@ using NPJL.Infrastructure.Identity;
 using NPJL.Infrastructure.Persistence;
 using NPJL.Infrastructure.Services;
 using System.Text;
+using NPJL.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,7 @@ builder.Services.AddControllers();
 
 // Registrerar Infrastructure och ApplicationDbContext
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 
 // Hämtar JWT-inställningar
 var jwtSettings = builder.Configuration.GetSection("Jwt");

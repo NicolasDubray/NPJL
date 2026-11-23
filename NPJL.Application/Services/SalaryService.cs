@@ -1,23 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using NPJL.Application.Interfaces;
-using NPJL.Domain.Entities;
 using System.Linq;
 using System.Threading.Tasks;
+using NPJL.Application.Interfaces;
+using NPJL.Domain.Entities;
 
-
-namespace NPJL.Infrastructure.Services
+namespace NPJL.Application.Services
 {
     // Service för hantering av anställdas löneuppgifter.
-    // Ärver grundläggande hämtningsmetoder från GenericService.
-    public class SalaryService : GenericService<Salary>
+    public class SalaryService
     {
         private readonly ISalaryRepository _salaryRepository;
 
-        public SalaryService(
-            ISalaryRepository repository)
-            : base(repository)
+        public SalaryService(ISalaryRepository repository)
         {
             _salaryRepository = repository;
         }
@@ -49,7 +44,6 @@ namespace NPJL.Infrastructure.Services
             // Grundläggande validering av indata.
             if (employeeId <= 0)
             {
-                
                 throw new ArgumentOutOfRangeException(
                     nameof(employeeId),
                     "Anställdens ID måste vara större än noll.");
@@ -94,9 +88,9 @@ namespace NPJL.Infrastructure.Services
             // endast om den redan har börjat gälla.
             // Framtida löneperioder får inte skrivas över automatiskt.
             var previousSalary = overlappingSalaries
-    .Where(s => s.ValidFrom < validFrom)
-    .OrderByDescending(s => s.ValidFrom)
-    .FirstOrDefault();
+                .Where(s => s.ValidFrom < validFrom)
+                .OrderByDescending(s => s.ValidFrom)
+                .FirstOrDefault();
 
             // Alla överlappningar utom den period som ska avslutas
             // innebär en konflikt.
@@ -111,12 +105,11 @@ namespace NPJL.Infrastructure.Services
                     "\r\nThe new pay period overlaps with one that is already registered. " +
                     "\r\npay period. Check the payroll history before the change is recorded.");
             }
-            
+
             // Avslutar föregående löneperiod dagen före den nya börjar.
             if (previousSalary != null)
             {
                 previousSalary.ValidTo = validFrom.AddDays(-1);
-
                 await _salaryRepository.UpdateAsync(previousSalary);
             }
 
