@@ -33,7 +33,7 @@ public class CustomerRequestService(ICustomerRequestRepository customerRequestRe
             Type = dto.Type,
             Description = description,
             CreatedAt = DateTime.UtcNow,
-            IsReviewed = false
+            
         };
 
         await customerRequestRepository.CreateAsync(request);
