@@ -49,6 +49,7 @@ namespace NPJL.Infrastructure.Services
             // Grundläggande validering av indata.
             if (employeeId <= 0)
             {
+                
                 throw new ArgumentOutOfRangeException(
                     nameof(employeeId),
                     "Anställdens ID måste vara större än noll.");
@@ -93,10 +94,9 @@ namespace NPJL.Infrastructure.Services
             // endast om den redan har börjat gälla.
             // Framtida löneperioder får inte skrivas över automatiskt.
             var previousSalary = overlappingSalaries
-                .Where(s => s.ValidFrom <= today &&
-                            s.ValidFrom < validFrom)
-                .OrderByDescending(s => s.ValidFrom)
-                .FirstOrDefault();
+    .Where(s => s.ValidFrom < validFrom)
+    .OrderByDescending(s => s.ValidFrom)
+    .FirstOrDefault();
 
             // Alla överlappningar utom den period som ska avslutas
             // innebär en konflikt.
@@ -108,10 +108,10 @@ namespace NPJL.Infrastructure.Services
             if (conflictingSalaries.Any())
             {
                 throw new InvalidOperationException(
-                    "Den nya löneperioden överlappar med en redan registrerad " +
-                    "löneperiod. Kontrollera lönehistoriken innan ändringen registreras.");
+                    "\r\nThe new pay period overlaps with one that is already registered. " +
+                    "\r\npay period. Check the payroll history before the change is recorded.");
             }
-
+            
             // Avslutar föregående löneperiod dagen före den nya börjar.
             if (previousSalary != null)
             {
