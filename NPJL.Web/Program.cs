@@ -4,6 +4,7 @@ using NPJL.Web.Configuration;
 using NPJL.Infrastructure;
 using NPJL.Web.Components;
 using NPJL.Web.Services;
+using NPJL.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,7 @@ builder.Services.AddCascadingAuthenticationState();
 // Registrerar skyddad sessionslagring för autentisering.
 builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

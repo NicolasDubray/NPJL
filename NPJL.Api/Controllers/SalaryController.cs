@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NPJL.Application.DTOs.Employees;
 using NPJL.Infrastructure.Identity;
-using NPJL.Infrastructure.Services;
+using NPJL.Application.Services;
 using System.Security.Claims;
 
 namespace NPJL.Api.Controllers

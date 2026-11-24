@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NPJL.Application.Interfaces;
+using NPJL.Application.Services;
 using NPJL.Infrastructure.Identity;
 using NPJL.Infrastructure.Persistence;
 using NPJL.Infrastructure.Repositories;
@@ -45,16 +46,6 @@ namespace NPJL.Infrastructure
             services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
             services.AddScoped<IBankInfoRepository, BankInfoRepository>();
             services.AddScoped<ITimeReportRepository, TimeReportRepository>();
-
-            // Registrerar services
-            services.AddScoped<NPJL.Application.Services.CustomerService>();
-            services.AddScoped<SalaryService>();
-            services.AddScoped<NPJL.Application.Services.EmployeeService>();
-            services.AddScoped<NPJL.Application.Services.ContactInfoService>();
-            services.AddScoped<NPJL.Application.Services.AbsentismService>();
-            services.AddScoped<NPJL.Application.Services.BankInfoService>();
-            services.AddScoped<ITimeReportService, NPJL.Application.Services.TimeReportService>();
-
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             services.AddScoped<IPaymentDetailsRepository, PaymentDetailsRepository>();
