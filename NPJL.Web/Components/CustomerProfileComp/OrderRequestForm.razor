@@ -1,7 +1,7 @@
 ﻿@using NPJL.Application.DTOs.Requests
-@using NPJL.Application.Services
 @using NPJL.Domain.Enums
-@inject CustomerRequestService CustomerRequestService
+@using NPJL.Web.Services
+@inject CustomerRequestApiService CustomerRequestApiService
 
 <EditForm Model="model" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />
@@ -21,7 +21,7 @@
         <InputTextArea class="form-control" rows="4" @bind-Value="model.Description" />
         <ValidationMessage For="() => model.Description" />
     </div>
-
+    
     @if (errorMessage != null)
     {
         <div class="alert alert-danger">@errorMessage</div>
@@ -72,7 +72,7 @@
 
         try
         {
-            await CustomerRequestService.CreateAsync(model);
+            await CustomerRequestApiService.CreateAsync(model);
             successMessage = "Your request has been sent";
             ResetModel();
             await OnSent.InvokeAsync();

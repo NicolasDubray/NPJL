@@ -85,6 +85,8 @@ if (app.Environment.IsDevelopment())
 
     // Skapar testadministratör och tillhörande inloggningskonto.
     await AdministratorSeeder.SeedAsync(userManager);
+    // Skapar testdata för kundens bokningar och fakturor.
+    await DevelopmentDataSeeder.SeedAsync(dbContext, "Test@test.com");
 }
 
 app.UseHttpsRedirection();
