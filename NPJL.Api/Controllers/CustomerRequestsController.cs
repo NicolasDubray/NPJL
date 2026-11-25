@@ -7,7 +7,7 @@ namespace NPJL.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Administrator")]
+
 public class CustomerRequestsController : ControllerBase
 {
     private readonly CustomerRequestService _customerRequestService;
@@ -20,15 +20,35 @@ public class CustomerRequestsController : ControllerBase
 
     // Hämtar samtliga kundförfrågningar.
     // Endast administratörer har åtkomst.
+    [Authorize(Roles = "Administrator")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var requests = await _customerRequestService.GetAllAsync();
-
+        
         return Ok(requests);
+    }
+    // Skapar en ny kundförfrågan.
+    // Denna endpoint används av kunder.
+    [Authorize(Roles = "Customer")]
+    [HttpPost]
+    public async Task<IActionResult> Create(
+    [FromBody] CreateRequestDto request)
+    {
+        try
+        {
+            await _customerRequestService.CreateAsync(request);
+
+            return Ok();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
     // Ändrar status på en kundförfrågan.
     // Endast administratörer har åtkomst.
+    [Authorize(Roles = "Administrator")]
     [HttpPut("{id:int}/status")]
     public async Task<IActionResult> UpdateStatus(
         int id,

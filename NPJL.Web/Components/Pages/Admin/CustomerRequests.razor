@@ -1,0 +1,209 @@
+﻿@page "/admin/customer-requests"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using NPJL.Domain.Entities
+@using NPJL.Domain.Enums
+@using NPJL.Web.Services
+
+@inject CustomerRequestApiService CustomerRequestApiService
+
+<PageTitle>Customer Requests</PageTitle>
+
+<AuthorizeView Roles="Administrator">
+    <Authorized>
+
+        <div class="customer-requests-page">
+
+            <div class="page-heading">
+                <div>
+                    <h1>Customer Requests</h1>
+                    <p>Review and manage customer requests.</p>
+                </div>
+            </div>
+
+            @if (isLoading)
+            {
+                <p>Fetching customer requests...</p>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="error-message">@errorMessage</p>
+            }
+            else if (requests.Count == 0)
+            {
+                <p>There are no customer requests.</p>
+            }
+            else
+            {
+                <div class="requests-summary">
+                    <span>
+                        Total requests:
+                        <strong>@requests.Count</strong>
+                    </span>
+
+                    <span>
+                        Awaiting review:
+                        <strong>
+                            @requests.Count(r =>
+                                r.Status == CustomerRequestStatus.InReview)
+                        </strong>
+                    </span>
+                </div>
+
+                <div class="table-container">
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Type</th>
+                                <th>Related to</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var request in requests)
+                            {
+                                <tr>
+                                    <td>@request.Id</td>
+
+                                    <td>@request.CustomerId</td>
+
+                                    <td>@request.Type</td>
+
+                                    <td>
+                                        @if (request.BookingId.HasValue)
+                                        {
+                                            <span>
+                                                Booking #@request.BookingId
+                                            </span>
+                                        }
+                                        else if (request.InvoiceId.HasValue)
+                                        {
+                                            <span>
+                                                Invoice #@request.InvoiceId
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>@request.Status</td>
+
+                                    <td>
+                                        @request.CreatedAt.ToLocalTime()
+                                        .ToString("yyyy-MM-dd HH:mm")
+                                    </td>
+
+                                    <td>@request.Description</td>
+
+                                    <td>
+                                        @if (request.Status == CustomerRequestStatus.InReview)
+                                        {
+                                            <button type="button"
+                                                    @onclick="() => UpdateStatusAsync(
+                                                        request.Id,
+                                                        CustomerRequestStatus.Approved)">
+Approve
+</button>
+
+                                            <button type="button"
+                                                    @onclick="() => UpdateStatusAsync(
+                                                        request.Id,
+                                                        CustomerRequestStatus.Denied)">
+Deny
+</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                </div>
+            }
+
+        </div>
+
+    </Authorized>
+
+    <NotAuthorized>
+        <div class="customer-requests-page">
+            <h1>Access denied</h1>
+
+            <p>
+                You need administrator privileges
+                to view customer requests.
+            </p>
+        </div>
+    </NotAuthorized>
+
+    <Authorizing>
+        <p>Checking permissions...</p>
+    </Authorizing>
+
+</AuthorizeView>
+
+@code {
+    private List<CustomerRequest> requests = new();
+
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    // Hämtar samtliga kundförfrågningar
+    // när sidan öppnas.
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            requests = (await CustomerRequestApiService.GetAllAsync())
+                .ToList();
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage =
+                "Could not reach the server. Check the API connection.";
+        }
+        catch (Exception)
+        {
+            errorMessage =
+                "An unexpected error occurred while retrieving customer requests.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Ändrar status på en kundförfrågan.
+    private async Task UpdateStatusAsync(
+        int requestId,
+        CustomerRequestStatus status)
+    {
+        try
+        {
+            errorMessage = null;
+
+            await CustomerRequestApiService.UpdateStatusAsync(
+                requestId,
+                status);
+
+            // Hämtar listan på nytt efter statusändringen.
+            requests = (await CustomerRequestApiService.GetAllAsync())
+                .ToList();
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage =
+                "Could not update the customer request.";
+        }
+        catch (Exception)
+        {
+            errorMessage =
+                "An unexpected error occurred while updating the request.";
+        }
+    }
+}
