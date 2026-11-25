@@ -29,6 +29,7 @@ builder.Services.AddScoped<BankInfoApiService>();
 builder.Services.AddScoped<TimeReportApiService>();
 builder.Services.AddScoped<SalaryApiService>();
 builder.Services.AddScoped<CustomerRequestApiService>();
+builder.Services.AddScoped<BookingApiService>();
 
 // Registrerar gemensamma skatteinställningar.
 builder.Services.Configure<TaxSettings>(

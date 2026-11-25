@@ -82,7 +82,7 @@ if (app.Environment.IsDevelopment())
 
     // Skapar testanställd och tillhörande inloggningskonto.
     await TestEmployeeSeeder.SeedAsync(dbContext, userManager);
-
+    
     // Skapar testadministratör och tillhörande inloggningskonto.
     await AdministratorSeeder.SeedAsync(userManager);
     // Skapar testdata för kundens bokningar och fakturor.

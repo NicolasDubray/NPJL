@@ -2,17 +2,17 @@
 using NPJL.Application.DTOs.Customers;
 using NPJL.Application.Services;
 using System.Security.Claims;
+using System.Net.Http.Json;
 
 namespace NPJL.Web.Services;
 
-public class CurrentCustomerService(AuthenticationStateProvider authenticationStateProvider, CustomerService customerService)
+public class CurrentCustomerService(AuthService authService)
 {
     public async Task<CustomerDto?> GetCurrentCustomerAsync()
     {
+        var client = authService.CreateAuthenticatedClient();
 
-        var state = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var email = state.User.FindFirst(ClaimTypes.Email)?.Value;
-        if (string.IsNullOrEmpty(email)) return null;
-        return await customerService.GetProfileByEmailAsync(email);
+        return await client.GetFromJsonAsync<CustomerDto>(
+            "api/Customers/my");
     }
 }
