@@ -13,4 +13,9 @@ public class CustomerRequestRepository(ApplicationDbContext context) : Repositor
 
         return entity;
     }
+    public override async Task UpdateAsync(CustomerRequest entity)
+    {
+        Context.CustomerRequests.Update(entity);
+        await Context.SaveChangesAsync();
+    }
 }

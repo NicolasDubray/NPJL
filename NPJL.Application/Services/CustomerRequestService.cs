@@ -1,6 +1,7 @@
 ﻿using NPJL.Application.DTOs.Requests;
 using NPJL.Application.Interfaces;
 using NPJL.Domain.Entities;
+using NPJL.Domain.Enums;
 
 namespace NPJL.Application.Services;
 
@@ -37,5 +38,27 @@ public class CustomerRequestService(ICustomerRequestRepository customerRequestRe
         };
 
         await customerRequestRepository.CreateAsync(request);
+    }
+    public async Task<IReadOnlyList<CustomerRequest>> GetAllAsync()
+    {
+        return await customerRequestRepository.GetAllAsync();
+    }
+    public async Task UpdateStatusAsync(int requestId, CustomerRequestStatus status)
+    {
+        if (!Enum.IsDefined(status))
+        {
+            throw new ArgumentException("Invalid request status");
+        }
+
+        var request = await customerRequestRepository.GetByIdAsync(requestId);
+
+        if (request == null)
+        {
+            throw new KeyNotFoundException("Customer request not found");
+        }
+
+        request.Status = status;
+
+        await customerRequestRepository.UpdateAsync(request);
     }
 }
