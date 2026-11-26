@@ -14,6 +14,7 @@
 
         <div class="customer-requests-page">
 
+            <!-- Sidhuvud -->
             <div class="page-heading">
                 <div>
                     <h1>Customer Requests</h1>
@@ -31,28 +32,34 @@
             }
             else if (requests.Count == 0)
             {
-                <p>There are no customer requests.</p>
+                <p class="empty-message">
+                    There are no customer requests.
+                </p>
             }
             else
             {
+                <!-- Sammanfattning -->
                 <div class="requests-summary">
-                    <span>
-                        Total requests:
-                        <strong>@requests.Count</strong>
-                    </span>
 
-                    <span>
-                        Awaiting review:
+                    <div class="summary-item">
+                        <span>Total requests</span>
+                        <strong>@requests.Count</strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Awaiting review</span>
                         <strong>
                             @requests.Count(r =>
                                 r.Status == CustomerRequestStatus.InReview)
                         </strong>
-                    </span>
+                    </div>
+
                 </div>
 
+                <!-- Förfrågningstabell -->
                 <div class="table-container">
 
-                    <table>
+                    <table class="request-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -69,11 +76,21 @@
                         <tbody>
                             @foreach (var request in requests)
                             {
-                                <tr>
+                                <tr class="request-row"
+                                    @onclick="() => ToggleDescription(request.Id)">
+
                                     <td>@request.Id</td>
 
-                                    <td>@request.CustomerId</td>
+                                    <td>
+                                        <div>Id: @request.CustomerId</div>
 
+                                        <div>
+                                            @(request.Customer?.ContactInfos
+                                                .FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.Email))
+                                                ?.Email ?? "No email available")
+                                        </div>
+                                    </td>
+                                    
                                     <td>@request.Type</td>
 
                                     <td>
@@ -91,34 +108,56 @@
                                         }
                                     </td>
 
-                                    <td>@request.Status</td>
-
                                     <td>
-                                        @request.CreatedAt.ToLocalTime()
-                                        .ToString("yyyy-MM-dd HH:mm")
+                                        <span class="request-status">
+                                            @request.Status
+                                        </span>
+                                    </td>
+                                    
+                                    <td>
+                                        @request.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
                                     </td>
 
-                                    <td>@request.Description</td>
+                                    <td class="request-description">
+                                        @GetDescriptionPreview(request.Description)
+                                    </td>
 
-                                    <td>
+                                    <td class="request-actions">
                                         @if (request.Status == CustomerRequestStatus.InReview)
                                         {
                                             <button type="button"
+                                                    class="request-approve-button"
                                                     @onclick="() => UpdateStatusAsync(
                                                         request.Id,
-                                                        CustomerRequestStatus.Approved)">
+                                                        CustomerRequestStatus.Approved)"
+    @onclick:stopPropagation="true">
 Approve
 </button>
 
                                             <button type="button"
+                                                    class="request-deny-button"
                                                     @onclick="() => UpdateStatusAsync(
                                                         request.Id,
-                                                        CustomerRequestStatus.Denied)">
+                                                        CustomerRequestStatus.Denied)"
+    @onclick:stopPropagation="true">
 Deny
 </button>
                                         }
                                     </td>
                                 </tr>
+
+                                @if (expandedRequestId == request.Id)
+                                {
+                                    <tr class="expanded-description-row">
+                                        <td colspan="8">
+                                            <div class="expanded-description">
+                                                <strong>Description:</strong>
+
+                                                <p>@request.Description</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -131,6 +170,7 @@ Deny
     </Authorized>
 
     <NotAuthorized>
+
         <div class="customer-requests-page">
             <h1>Access denied</h1>
 
@@ -139,6 +179,7 @@ Deny
                 to view customer requests.
             </p>
         </div>
+
     </NotAuthorized>
 
     <Authorizing>
@@ -186,7 +227,7 @@ Deny
         try
         {
             errorMessage = null;
-
+            
             await CustomerRequestApiService.UpdateStatusAsync(
                 requestId,
                 status);
@@ -205,5 +246,25 @@ Deny
             errorMessage =
                 "An unexpected error occurred while updating the request.";
         }
+    }
+    private int? expandedRequestId;
+
+    private void ToggleDescription(int requestId)
+    {
+        expandedRequestId = expandedRequestId == requestId
+            ? null
+            : requestId;
+    }
+    
+    private static string GetDescriptionPreview(string description)
+    {
+        const int maxLength = 40;
+
+        if (description.Length <= maxLength)
+        {
+            return description;
+        }
+
+        return description[..maxLength] + "...";
     }
 }

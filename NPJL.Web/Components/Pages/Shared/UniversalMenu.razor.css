@@ -47,14 +47,29 @@
     transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-    .admin-dropdown-toggle:hover {
-        background-color: #AEAEAE;
-        transform: scale(1.06);
-    }
+.admin-dropdown-toggle:hover {
+    background-color: #AEAEAE;
+    transform: scale(1.06);
+}
 
 .dropdown-arrow {
     font-size: 10px;
     transition: transform 0.2s ease;
+}
+/* Räknare för väntande administrativa ärenden */
+.admin-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 50%;
+    background-color: #A8A8A8;
+    color: #222;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 1;
 }
 
 /* Dropdown-innehållet */
@@ -73,8 +88,12 @@
 }
 
     /* Länkarna i dropdown-menyn */
+    /* Placering av räknare i dropdown-länkar */
     .admin-dropdown-menu a {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
         padding: 10px 14px;
         background-color: transparent;
         color: #222;
@@ -82,7 +101,8 @@
         border-radius: 4px;
         transition: background-color 0.2s ease;
     }
-
+    
+  
         .admin-dropdown-menu a:hover {
             background-color: #C5C5C5;
             transform: none;
@@ -198,7 +218,7 @@
         .admin-dropdown-menu a {
             text-align: center;
         }
-
+    
     /* Anpassar utloggningsknappen för mobilmenyn */
     .logout-button {
         width: 100%;

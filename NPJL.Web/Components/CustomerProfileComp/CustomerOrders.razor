@@ -105,13 +105,10 @@
 
             bookings = await BookingApiService.GetMyBookingsAsync();
         }
-        // catch (Exception)
-        // {
-        //     errorMessage = "Could not load your orders, please try again";
-        // }
-        catch (Exception ex)
+        catch (Exception)
         {
-            errorMessage = $"Error: {ex.Message}";
+            errorMessage = "Could not load your orders, please try again";
         }
+        
     }
 }
