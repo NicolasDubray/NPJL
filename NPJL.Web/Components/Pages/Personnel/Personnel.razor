@@ -40,12 +40,12 @@
             {
                 <div class="personnel-summary">
                     <span>
-                        Totalt antal anställda:
+                        Total employees:
                         <strong>@employees.Count</strong>
                     </span>
 
                     <span>
-                        Aktiva:
+                        Active:
                         <strong>@employees.Count(e => e.IsActive)</strong>
                     </span>
                 </div>
@@ -59,9 +59,9 @@
                            @bind:event="oninput" />
 
                     <select @bind="statusFilter">
-                        <option value="All">Alla anställda</option>
-                        <option value="Active">Aktiva</option>
-                        <option value="Inactive">Inaktiva</option>
+                        <option value="All">All employees</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
                     </select>
 
                 </div>
@@ -69,7 +69,8 @@
                 @if (filteredEmployees.Count == 0)
                 {
                     <p class="status-message">
-                        Inga anställda matchade dina sökkriterier.
+                        
+                        No employees matched your search criteria.
                     </p>
                 }
                 else
@@ -78,9 +79,13 @@
                         <table class="personnel-table">
                             <thead>
                                 <tr>
-                                    <th>Namn</th>
-                                    <th>Personnummer</th>
-                                    <th>Semesterdagar</th>
+                                    <th>Name</th>
+                                    <th>
+                                        Personal identity number
+                                    </th>
+                                    <th>
+                                        Vacation days
+                                    </th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -184,11 +189,11 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Kunde inte nå servern. Kontrollera API-anslutningen.";
+            errorMessage = "Could not reach the server.Check the API connection.";
         }
         catch (Exception)
         {
-            errorMessage = "Ett oväntat fel uppstod när personaluppgifterna skulle hämtas.";
+            errorMessage = "An unexpected error occurred while retrieving the personnel data.";
         }
         finally
         {

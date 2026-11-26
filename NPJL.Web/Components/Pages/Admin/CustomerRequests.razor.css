@@ -1,0 +1,226 @@
+﻿
+/* Huvudlayout */
+.customer-requests-page {
+    width: 100%;
+    padding: 30px 7%;
+    color: #222;
+}
+
+    /* Sidhuvud */
+    .customer-requests-page .page-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #AEAEAE;
+    }
+
+        .customer-requests-page .page-heading h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .customer-requests-page .page-heading p {
+            margin: 6px 0 0;
+            color: #666;
+        }
+
+    /* Sammanfattning */
+    .customer-requests-page .requests-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 22px;
+    }
+
+    .customer-requests-page .summary-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 200px;
+        padding: 20px 24px;
+        background-color: #DCDCDC;
+        border-radius: 5px;
+    }
+
+        .customer-requests-page .summary-item span {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .customer-requests-page .summary-item strong {
+            font-size: 26px;
+            font-weight: 600;
+        }
+
+    /* Tabellcontainer */
+    .customer-requests-page .table-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-bottom: 22px;
+        padding: 20px 24px;
+        background-color: #DCDCDC;
+        border-radius: 5px;
+    }
+
+    /* Tabell */
+    .customer-requests-page .request-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+    }
+
+        .customer-requests-page .request-table th,
+        .customer-requests-page .request-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #AEAEAE;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .customer-requests-page .request-table th {
+            font-size: 14px;
+            font-weight: 600;
+            background-color: #C5C5C5;
+        }
+
+        .customer-requests-page .request-table tbody tr:hover {
+            background-color: #C5C5C5;
+        }
+
+        .customer-requests-page .request-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+    /* Beskrivning */
+    .customer-requests-page .request-description {
+        min-width: 220px;
+        max-width: 400px;
+        white-space: normal;
+        overflow-wrap: break-word;
+        line-height: 1.5;
+    }
+
+    /* Status */
+    .customer-requests-page .request-status {
+        display: inline-block;
+        padding: 6px 10px;
+        background-color: #C5C5C5;
+        border-radius: 5px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Åtgärdsknappar */
+    .customer-requests-page .request-approve-button,
+    .customer-requests-page .request-deny-button {
+        padding: 9px 16px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    /* Godkänn */
+    .customer-requests-page .request-approve-button {
+        background-color: #C5C5C5;
+        color: #222;
+    }
+
+        .customer-requests-page .request-approve-button:hover {
+            background-color: #AEAEAE;
+            transform: scale(1.04);
+        }
+
+    /* Neka */
+    .customer-requests-page .request-deny-button {
+        background-color: #D0A9A9;
+        color: #542323;
+    }
+
+        .customer-requests-page .request-deny-button:hover {
+            background-color: #C58F8F;
+            transform: scale(1.04);
+        }
+
+    /* Placering av åtgärdsknappar */
+    .customer-requests-page .request-actions {
+        white-space: nowrap;
+    }
+
+        .customer-requests-page .request-actions button + button {
+            margin-left: 8px;
+        }
+
+    /* Meddelanden */
+    .customer-requests-page .error-message {
+        padding: 15px 20px;
+        background-color: #C5C5C5;
+        border-radius: 5px;
+        color: #8B2020;
+    }
+
+    .customer-requests-page .empty-message {
+        padding: 20px 24px;
+        background-color: #DCDCDC;
+        border-radius: 5px;
+        color: #666;
+    }
+
+/* Mobilanpassning */
+@media (max-width: 768px) {
+    .customer-requests-page {
+        padding: 20px 12px;
+    }
+
+        .customer-requests-page .page-heading h1 {
+            font-size: 24px;
+        }
+
+        .customer-requests-page .requests-summary {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .customer-requests-page .summary-item {
+            width: 100%;
+            min-width: unset;
+            padding: 16px;
+        }
+
+        .customer-requests-page .table-container {
+            padding: 12px;
+        }
+
+        .customer-requests-page .request-table th,
+        .customer-requests-page .request-table td {
+            padding: 10px;
+        }
+        /* Klickbar förfrågningsrad */
+        .customer-requests-page .request-row {
+            cursor: pointer;
+        }
+
+        /* Expanderad beskrivning */
+        .customer-requests-page .expanded-description-row td {
+            padding: 0;
+            border-bottom: 1px solid #AEAEAE;
+        }
+
+        .customer-requests-page .expanded-description {
+            padding: 20px 24px;
+            background-color: #C5C5C5;
+            line-height: 1.6;
+        }
+
+            .customer-requests-page .expanded-description p {
+                margin: 10px 0 0;
+                white-space: pre-wrap;
+                overflow-wrap: break-word;
+            }
+}

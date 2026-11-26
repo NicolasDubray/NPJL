@@ -1,8 +1,12 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@implements IDisposable
+@using Microsoft.AspNetCore.Components.Authorization
 @using NPJL.Web.Services
+@using NPJL.Domain.Enums
 
-@inject CustomAuthenticationStateProvider AuthenticationProvider
+@inject AuthenticationStateProvider AuthenticationProvider
+@inject CustomerRequestApiService CustomerRequestApiService
 @inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider CustomAuthProvider
 
 <nav class="universal-menu">
 
@@ -37,7 +41,7 @@
 
             <Authorized Context="auth">
 
-                <!-- Kund – visas när kund är inloggad -->
+                <!-- Kund -->
                 @if (auth.User.IsInRole("Customer"))
                 {
                     <a href="#" @onclick:preventDefault="true">Offers</a>
@@ -45,16 +49,16 @@
                     <a href="/customerOrders" @onclick="CloseMenu">Orders</a>
                     <a href="/customerInvoice" @onclick="CloseMenu">Invoices</a>
                 }
-
-                <!-- Anställd – visas när anställd eller administratör är inloggad -->
+                
+                <!-- Anställd -->
                 @if (auth.User.IsInRole("Employee") ||
-     auth.User.IsInRole("Administrator"))
+                     auth.User.IsInRole("Administrator"))
                 {
                     <a href="/my-profile" @onclick="CloseMenu">My Profile</a>
                     <a href="#" @onclick:preventDefault="true">Assigned orders</a>
                 }
 
-                <!-- Administratör – samlar administrativa funktioner i en dropdown -->
+                <!-- Administratör -->
                 @if (auth.User.IsInRole("Administrator"))
                 {
                     <div class="admin-dropdown"
@@ -64,7 +68,16 @@
                                 class="admin-dropdown-toggle"
                                 @onclick="ToggleAdminMenu"
                                 aria-expanded="@adminMenuOpen">
+
                             Admin
+
+                            @if (pendingCustomerRequests > 0)
+                            {
+                                <span class="admin-count">
+                                    @pendingCustomerRequests
+                                </span>
+                            }
+
                             <span class="dropdown-arrow">▼</span>
                         </button>
 
@@ -77,14 +90,25 @@
                                     Personnel Register
                                 </a>
 
-                                <a href="/personnel/register-employee" @onclick="CloseMenu">
+                                <!-- Customer requests -->
+                                <a href="/admin/customer-requests"
+                                   @onclick="CloseMenu">
+
+                                    Customer Requests
+
+                                    @if (pendingCustomerRequests > 0)
+                                    {
+                                        <span class="admin-count">
+                                            @pendingCustomerRequests
+                                        </span>
+                                    }
+                                </a>
+
+                                <a href="/personnel/register-employee"
+                                   @onclick="CloseMenu">
                                     Register New Employee
                                 </a>
-
-                                <a href="#" @onclick:preventDefault="true">
-                                    Absence Management
-                                </a>
-
+                               
                                 <a href="#" @onclick:preventDefault="true">
                                     Time Reporting
                                 </a>
@@ -93,7 +117,7 @@
                                 <a href="#" @onclick:preventDefault="true">
                                     Customer Register
                                 </a>
-
+                                
                                 <!-- Bookings and sales -->
                                 <a href="#" @onclick:preventDefault="true">
                                     Booking Management
@@ -111,10 +135,7 @@
                                     Orders
                                 </a>
 
-                                <!-- System administration -->
-                                <a href="#" @onclick:preventDefault="true">
-                                    User Management
-                                </a>
+                                
 
                             </div>
                         }
@@ -149,11 +170,61 @@
 </nav>
 
 @code {
+
     // Håller reda på om mobilmenyn är öppen eller stängd.
     private bool menuOpen = false;
 
     // Håller reda på om administratörsmenyn är öppen eller stängd.
     private bool adminMenuOpen = false;
+
+    // Antal kundförfrågningar som väntar på behandling.
+    private int pendingCustomerRequests = 0;
+
+    // Hämtar antalet väntande kundförfrågningar för administratörer.
+    protected override void OnInitialized()
+    {
+        CustomAuthProvider.AuthenticationStateChanged +=
+            OnAuthenticationStateChanged;
+    }
+
+    private async void OnAuthenticationStateChanged(
+        Task<AuthenticationState> task)
+    {
+        var authState = await task;
+        var user = authState.User;
+
+        if (!user.IsInRole("Administrator"))
+        {
+            pendingCustomerRequests = 0;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        await LoadCustomerRequests();
+    }
+
+    private async Task LoadCustomerRequests()
+    {
+        try
+        {
+            var requests = await CustomerRequestApiService.GetAllAsync();
+
+            pendingCustomerRequests = requests.Count(
+                request => request.Status == CustomerRequestStatus.InReview);
+        }
+        catch (Exception)
+        {
+            pendingCustomerRequests = 0;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CustomAuthProvider.AuthenticationStateChanged -=
+            OnAuthenticationStateChanged;
+    }
 
     // Öppnar eller stänger mobilmenyn.
     private void ToggleMenu()
@@ -177,18 +248,18 @@
     {
         adminMenuOpen = false;
     }
-
+    
     // Stänger menyerna när en länk väljs.
     private void CloseMenu()
     {
         menuOpen = false;
         adminMenuOpen = false;
     }
-    
+
     // Loggar ut användaren och återställer autentiseringstillståndet.
     private async Task Logout()
     {
-        await AuthenticationProvider.LogoutAsync();
+        await CustomAuthProvider.LogoutAsync();
 
         CloseMenu();
 

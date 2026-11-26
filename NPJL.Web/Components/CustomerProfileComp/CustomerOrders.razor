@@ -3,9 +3,11 @@
 @using NPJL.Application.DTOs.Bookings
 @using NPJL.Application.DTOs.Customers
 @using NPJL.Application.Services
-@using NPJL.Web.Services
 @using NPJL.Domain.Enums
-@inject BookingService BookingService
+@using NPJL.Web.Services
+
+
+@inject BookingApiService BookingApiService
 @inject CurrentCustomerService CurrentCustomerService
 
 <div class="container">
@@ -91,18 +93,22 @@
     private int? selectedBookingId;
     private string? errorMessage;
     private readonly RequestType[] orderRequestTypes = [RequestType.Cancel, RequestType.Update];
-
+    
     protected override async Task OnInitializedAsync()
     {
         try
         {
             customer = await CurrentCustomerService.GetCurrentCustomerAsync();
-            if (customer == null) return;
-            bookings = await BookingService.GetByCustomerIdAsync(customer.Id);
+
+            if (customer == null)
+                return;
+
+            bookings = await BookingApiService.GetMyBookingsAsync();
         }
         catch (Exception)
         {
             errorMessage = "Could not load your orders, please try again";
         }
+        
     }
 }

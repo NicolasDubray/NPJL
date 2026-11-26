@@ -1,17 +1,18 @@
-﻿using System.Net.Http.Json;
-using NPJL.Application.DTOs.Authentication;
+﻿
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using NPJL.Application.DTOs.Authentication;
 
 namespace NPJL.Web.Services
 {
-    
     public class AuthService
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly CustomAuthenticationStateProvider _authenticationProvider;
+
         public AuthService(
-    IHttpClientFactory httpClientFactory,
-    CustomAuthenticationStateProvider authenticationProvider)
+            IHttpClientFactory httpClientFactory,
+            CustomAuthenticationStateProvider authenticationProvider)
         {
             _httpClientFactory = httpClientFactory;
             _authenticationProvider = authenticationProvider;
@@ -26,6 +27,7 @@ namespace NPJL.Web.Services
                 "api/Auth/register",
                 request);
         }
+
         public async Task<HttpResponseMessage> LoginAsync(LoginDto request)
         {
             var client = _httpClientFactory.CreateClient("NPJL.Api");
@@ -34,21 +36,24 @@ namespace NPJL.Web.Services
                 "api/Auth/login",
                 request);
         }
+
         // Skapar en HttpClient som skickar med användarens JWT-token.
         public HttpClient CreateAuthenticatedClient()
         {
             var client = _httpClientFactory.CreateClient("NPJL.Api");
 
-            if (!string.IsNullOrWhiteSpace(_authenticationProvider.Token))
+            if (string.IsNullOrWhiteSpace(_authenticationProvider.Token))
             {
-                client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue(
-                        "Bearer",
-                        _authenticationProvider.Token);
+                throw new InvalidOperationException(
+                    "JWT token is missing from CustomAuthenticationStateProvider.");
             }
+
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    _authenticationProvider.Token);
 
             return client;
         }
-        
     }
 }

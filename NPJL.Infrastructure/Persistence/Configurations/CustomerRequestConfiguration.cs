@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NPJL.Domain.Entities;
+using NPJL.Domain.Enums;
 
 namespace NPJL.Infrastructure.Persistence.Configurations;
 
@@ -19,7 +20,10 @@ public class CustomerRequestConfiguration : IEntityTypeConfiguration<CustomerReq
         builder.HasKey(cr => cr.Id);
         builder.Property(cr => cr.CreatedAt).IsRequired();
         builder.Property(cr => cr.Description).IsRequired().HasMaxLength(1000);
-        builder.Property(cr => cr.IsReviewed).IsRequired();
+        builder.Property(cr => cr.Status)
+    .HasConversion<string>()
+    .HasMaxLength(20)
+    .IsRequired();
         builder.Property(cr => cr.Type).HasConversion<string>()
             .HasMaxLength(20).IsRequired();
         builder.HasIndex(cr => cr.CustomerId);
